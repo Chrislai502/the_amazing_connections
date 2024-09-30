@@ -1,1 +1,1 @@
-# the_amazing_connect_four
+# the_amazing_connections
