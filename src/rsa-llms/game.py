@@ -21,7 +21,15 @@ class Category:
 
 class Connections:
 
-    def __init__(self, groups: list[Category], group_size: int = 4, max_strikes: int = 3):
+    @property
+    def all_words(self) -> list[str]:
+        return [
+            word 
+            for group in self.groups
+            for word in group.members
+        ]
+
+    def __init__(self, groups: list[Category], group_size: int = 4, max_strikes: int = 9999):
         """
         Initialize a Connections object with a list of groups and their associated members.
 
@@ -38,6 +46,10 @@ class Connections:
         self._og_groups = groups
         self.groups = groups
         self.current_strikes = 0
+
+    def get_groups_by_level(self, level: int) -> list[Category]:
+        """Filter the groups in this game by their level"""
+        return [group for group in self.groups if group.level == level]
 
     def guess(self, words: list[str]) -> Category | None:
         """

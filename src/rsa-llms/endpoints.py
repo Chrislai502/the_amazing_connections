@@ -6,7 +6,7 @@ from dataclasses import dataclass
 @dataclass
 class Endpoint:
     """
-    Simple interface for interacting with an OAI API endpoint.
+    Common interface for interacting with an OAI API endpoint (e.g. ollama, groq, etc.)
 
     :param base_url: the base URL of the API
     :param model: the model to use for the chat completion endpoint
@@ -14,6 +14,7 @@ class Endpoint:
 
     base_url: str
     model: str
+    api_key: str | None = None
 
     CHAT_COMPLETION = "v1/chat/completions"
 

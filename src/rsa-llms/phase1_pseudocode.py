@@ -2,7 +2,7 @@
 import chevron
 
 from .endpoints import Endpoint
-from .game import Connections
+from .game import Connections, Category, load_daily_board, GameOverException
 
 TOTAL_STRIKES = 3
 MAX_ITERATIONS = 5
@@ -58,47 +58,51 @@ def pragmatic_speaker(words: list[str], all_words: list[str]) -> str:
     
     return best_category
 
-def pragmatic_listener(category, all_words, num_samples=3):
+def pragmatic_listener(category: str, all_words: list[str], num_samples: int = 1) -> list[Category]:
     prompt = get_prompt("L1", category=category, all_words=', '.join(all_words), num_samples=num_samples)
 
     system_message = "You are a strategic thinker. Consider the speaker's intentions and possible word combinations."
     response = ollama_call(prompt, system_message, MODELS["pragmatic_listener"])
-    return [set(line.strip().split(", ")) for line in response.strip().split("\n")]
+    return [
+        Category(level=-1, group=category, members=line.strip().split(", "))
+        for line in response.strip().split("\n")
+    ]
 
 def rsa_connections_solver(game: Connections):
     level = 0
+    solves = [ False, False, False, False ]
 
-    while level < 4 and strikes > 0:
-        curr_word_group = daily_board["answers"][level]
-        target_words = set(curr_word_group["members"])
-        all_words = daily_board["all_words"]
+    while level < 4:
+        curr_group = game.get_groups_by_level(level)[0]
 
         # Pragmatic Speaker (S1)
-        category = pragmatic_speaker(target_words, all_words)
-        print(f"Generated category: {category}")
+        category_utterance = pragmatic_speaker(curr_group.members, game.all_words)
+        print(f"Generated category: {category_utterance}")
 
         # Pragmatic Listener (L1)
-        guessed_word_sets = pragmatic_listener(category, all_words, num_samples=1) # we could try later on with multiple
+        guesses = pragmatic_listener(category_utterance, game.all_words, num_samples=1) # we could try later on with multiple
 
         # Check if any of the guessed sets match the target
-        for guess_set in guessed_word_sets:
-            if guess_set == target_words:
-                print(f"Level {level} solved! Category: {curr_word_group['group']}")
+        for guess in guesses:
+            try:
+                actual_category = game.guess(guess.members)
+            except GameOverException as e:
+                raise e
+
+            if actual_category is not None:
+                print(f"Level {level} solved! Category: {curr_group.group}")
+                solves[level] = True
                 level += 1
                 break
         else:
-            # If no correct guess, use the top guess
-            top_guess = guessed_word_sets[0]
-            if top_guess == target_words:
-                print(f"Level {level} solved! Category: {curr_word_group['group']}")
-                level += 1
-            else:
-                strikes -= 1
-                print(f"Incorrect guess. Strikes remaining: {strikes}")
-                print(f"Guessed: {', '.join(top_guess)}")
-                print(f"Correct: {', '.join(target_words)}")
+            # If no correct guess, use the top guess and move on (to the next level)
+            top_guess = guesses[0].members
+            print(f"All guesses failed!")
+            print(f"Top guess: {', '.join(top_guess)}")
+            print(f"Correct: {', '.join(curr_group.members)}")
+            level += 1
 
-    return level
+    return solves
 
 def main():
     daily_board = load_daily_board()
