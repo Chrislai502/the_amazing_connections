@@ -11,7 +11,13 @@ ENDPOINTS = {
     "literal_listener"   : Endpoint("http://localhost:11434", model="phi3.5"), # this is a bit simpler version compared to the rest
 }
 
-def rsa_connections_solver(game: Connections):
+def rsa_connections_solver(game: Connections) -> list[bool]:
+    """
+    Solve a Connections game using RSA models.
+
+    :param game: the Connections game to solve
+    :return: a list of booleans indicating which levels were solved
+    """
     level = 0
     solves = [ False, False, False, False ]
 
@@ -51,7 +57,7 @@ def rsa_connections_solver(game: Connections):
 
     return solves
 
-def main():
+def script_entrypoint():
     daily_board = load_daily_board()
 
     print("Starting RSA algo")
@@ -59,4 +65,4 @@ def main():
     print(f"RSA-inspired solver completed {rsa_score} levels.")
 
 if __name__ == "__main__":
-    main()
+    script_entrypoint()

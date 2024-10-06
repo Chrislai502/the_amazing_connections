@@ -1,7 +1,12 @@
 
+import importlib
+
 from dataclasses import dataclass
+import importlib.resources
 
 import chevron, requests
+
+PROMPTS_FOLDER = importlib.resources.files("rsa-llms").joinpath("prompts")
 
 @dataclass
 class Endpoint:
@@ -45,5 +50,5 @@ class Endpoint:
         return json_response['choices'][0]['message']['content']
 
 def get_prompt(name: str, **kwargs) -> str:
-    with open(f"prompts/{name}.mustache") as f:
-        return chevron.render(f.read(), **kwargs)
+    with PROMPTS_FOLDER.joinpath(f"{name}.mustache").open() as f:
+        return chevron.render(f.read(), data=kwargs)
