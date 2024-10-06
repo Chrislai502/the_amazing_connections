@@ -1,6 +1,7 @@
 
-import requests, random
+import random
 from dataclasses import dataclass
+import requests
 
 # the repository for this data is at https://github.com/Eyefyre/NYT-Connections-Answers
 GAME_DATA_ENDPOINT = "https://raw.githubusercontent.com/Eyefyre/NYT-Connections-Answers/refs/heads/main/connections.json"
@@ -86,7 +87,7 @@ def sample_game() -> Connections:
         raise Exception(f"Failed to get connections data: {resp.status_code}")
     games = resp.json()
 
-    sampled_game = random.sample(games, 1)
+    sampled_game = random.sample(games, 1)[0]
 
     categories = [
         Category(**category) for category in sampled_game["answers"]

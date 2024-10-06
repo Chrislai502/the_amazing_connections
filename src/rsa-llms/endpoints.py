@@ -1,7 +1,7 @@
 
-import requests
-
 from dataclasses import dataclass
+
+import chevron, requests
 
 @dataclass
 class Endpoint:
@@ -22,12 +22,12 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_promt: str | None = None) -> str:
+    def respond(self, message: str, system_prompt: str | None = None) -> str:
         headers = {"Content-Type": "application/json"}
 
         messages = [ {"role": "user", "content": message} ]
-        if system_promt is not None:
-            messages.insert(0, {"role": "system", "content": system_promt})
+        if system_prompt is not None:
+            messages.insert(0, {"role": "system", "content": system_prompt})
 
         data = {
             "model": self.model,
@@ -38,7 +38,12 @@ class Endpoint:
 
         try:
             json_response = response.json()
-        except:
+        except Exception as e:
             print(response.text)
+            raise e
 
         return json_response['choices'][0]['message']['content']
+
+def get_prompt(name: str, **kwargs) -> str:
+    with open(f"prompts/{name}.mustache") as f:
+        return chevron.render(f.read(), **kwargs)
