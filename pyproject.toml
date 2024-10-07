@@ -18,12 +18,12 @@ authors = [
     { name = "Nelson Lojo", email = "nelson.lojo@berkeley.edu"},
     { name = "Ashish Pandian", email = "ashishpandian@berkeley.edu" },
     { name = "Chris Lai", email = "chrislai_502@berkeley.edu" },
-    { name = "Jackson ", email = "jacksonlukas@berkeley.edu" },
+    { name = "Jackson Lukas", email = "jacksonlukas@berkeley.edu" },
 ]
 maintainers = [
     { name = "Nelson Lojo", email = "nelson.lojo@berkeley.edu"},
     { name = "Ashish Pandian", email = "ashishpandian@berkeley.edu" },
     { name = "Chris Lai", email = "chrislai_502@berkeley.edu" },
-    { name = "Jackson ", email = "jacksonlukas@berkeley.edu" },
+    { name = "Jackson Lukas", email = "jacksonlukas@berkeley.edu" },
 ]
 
