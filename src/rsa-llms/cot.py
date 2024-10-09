@@ -4,7 +4,7 @@ from .game import Connections, load_json_to_connections, GameOverException
 
 # Define model configuration for CoT prompting
 ENDPOINTS = {
-    "cot_model": Endpoint("http://localhost:11434", model="gpt-4")  # Adjust the model and endpoint URL as needed
+    "cot_model": Endpoint("http://localhost:11434", model="gpt-3.5")  # Adjust the model and endpoint URL as needed
 }
 
 def cot_connections_solver(game: Connections, include_category=True, shot_type="zero-shot") -> list[bool]:
@@ -94,12 +94,15 @@ Apple, banana, orange, and grape all share a common characteristic: they are typ
 
 def get_cot_response(prompt: str) -> str:
     """
-    Get a response from the CoT model for the provided prompt.
-
-    :param prompt: The CoT reasoning prompt
-    :return: The response from the model
+    Simulated response from the CoT model for the provided prompt. This is useful for testing.
     """
-    return ENDPOINTS["cot_model"].respond(message=prompt)
+    print(f"Prompt sent to model:\n{prompt}\n")
+    
+    # Simulated model response
+    if "category" in prompt:
+        return "Apple, banana, orange, and grape belong to the category of 'fruits.' These are all edible, natural products."
+    else:
+        return "Apple, banana, orange, and grape all share a common characteristic: they are types of fruit."
 
 def extract_words_from_response(response: str) -> list[str]:
     """
@@ -125,7 +128,7 @@ def extract_words_from_response(response: str) -> list[str]:
 
 def script_entrypoint():
     # Load the game from the provided ICL connections data
-    icl_connections = load_json_to_connections(filename='icl_connections.json')
+    icl_connections = load_json_to_connections(filename='src/rsa-llms/icl_connections.json')
 
     # Test the solver with zero-shot and one-shot modes for both include_category options
     print("Starting CoT solver in zero-shot mode where agent knows the category")
