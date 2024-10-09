@@ -61,10 +61,10 @@ def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero
     # One-shot example when the agent knows the category
     example_with_category = """
 Here are some words: apple, banana, orange, grape, car, truck, plane, train.
-Group four of these words together and explain what category they belong to.
+You are grouping words into the category 'fruits.' Group four words from this list that belong to the category of 'fruits.'
 
 Example Response:
-The words apple, banana, orange, and grape belong to the category of 'fruits.' These are all edible, natural products that grow on trees or vines. The other words are vehicles, which do not belong in this group.
+Apple, banana, orange, and grape belong to the category of 'fruits.' These are all edible, natural products that grow on trees or vines. The other words are vehicles, which do not belong in this group.
 """
 
     # One-shot example when the agent does not know the category
@@ -73,12 +73,12 @@ Here are some words: apple, banana, orange, grape, car, truck, plane, train.
 Group four of these words together based on their similarities, but do not provide the category name.
 
 Example Response:
-The words apple, banana, orange, and grape all share a common characteristic: they are types of fruit. They are natural, edible, and grow on trees or vines. The other words are vehicles, so they do not belong in this group.
+Apple, banana, orange, and grape all share a common characteristic: they are types of fruit. They are natural, edible, and grow on trees or vines. The other words are vehicles, so they do not belong in this group.
 """
 
     # Now provide the actual prompt with the words
     if include_category:
-        actual_prompt = f"Here are some words: {', '.join(words)}. Group four of these words together and explain what category they belong to."
+        actual_prompt = f"Here are some words: {', '.join(words)}. You are grouping words into a specific category. Group four of these words that belong to that category."
     else:
         actual_prompt = f"Here are some words: {', '.join(words)}. Group four of these words together based on their similarities, but do not provide the category name."
 
