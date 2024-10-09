@@ -3,7 +3,7 @@ from .game import Connections, load_json_to_connections, GameOverException
 
 # Define model configuration for CoT prompting
 ENDPOINTS = {
-    "cot_model": Endpoint("http://localhost:11434", model="gpt-4")
+    "cot_model": Endpoint("http://localhost:11434", model="gpt-3.5")
 }
 
 def cot_connections_solver(game: Connections, include_category=True) -> list[bool]:
