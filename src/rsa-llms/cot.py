@@ -1,3 +1,4 @@
+import re
 from .endpoints import Endpoint
 from .game import Connections, load_json_to_connections, GameOverException
 
@@ -107,9 +108,20 @@ def extract_words_from_response(response: str) -> list[str]:
     :param response: The CoT model's response
     :return: A list of four guessed words
     """
-    # This is a simple example of extracting words from the response.
-    # You might need to adjust this depending on how the model formats its output.
-    return response.split()[:4]  # Assuming the first four words are the guessed group
+    # Regular expression to find words between the phrase "belong to" or "are" and "category" or the end of the sentence.
+    # This assumes the model outputs something like: "Apple, banana, orange, and grape belong to the category..."
+    pattern = r"(\b\w+\b(?:,? and)?){4}"
+
+    # Search for the four words in the response
+    match = re.search(pattern, response)
+    
+    if match:
+        # Extract the words and split them into a list, handling commas and conjunctions
+        words = re.findall(r'\b\w+\b', match.group(0))
+        return words
+    else:
+        # If no match is found, return an empty list or handle it appropriately
+        return []
 
 def script_entrypoint():
     # Load the game from the provided ICL connections data
