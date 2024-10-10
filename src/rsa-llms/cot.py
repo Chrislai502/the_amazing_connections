@@ -23,7 +23,11 @@ def cot_connections_solver(game: Connections, include_category=True, shot_type="
         curr_group = game.get_groups_by_level(level)[0]
 
         # CoT Prompting: Generate reasoning for the category (if known) or based on similarities
-        cot_prompt = generate_cot_prompt(curr_group.members, include_category, shot_type)
+        if include_category:
+            cot_prompt = generate_cot_prompt(curr_group.members, include_category, shot_type, category=curr_group.group)
+        else:
+            cot_prompt = generate_cot_prompt(curr_group.members, include_category, shot_type)
+
         category_utterance = get_cot_response(cot_prompt)
 
         print(f"Generated category reasoning: {category_utterance}")
@@ -48,6 +52,7 @@ def cot_connections_solver(game: Connections, include_category=True, shot_type="
             level += 1
 
     return solves
+
 
 def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero-shot", category=None) -> str:
     """
