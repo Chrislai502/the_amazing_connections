@@ -1,5 +1,5 @@
 import re
-from .endpoints import Endpoint
+from .endpoints import Endpoint, get_prompt
 from .game import Connections, load_json_to_connections, GameOverException
 
 # Define model configuration for CoT prompting
@@ -49,48 +49,48 @@ def cot_connections_solver(game: Connections, include_category=True, shot_type="
 
     return solves
 
-def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero-shot") -> str:
+def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero-shot", category=None) -> str:
     """
-    Generate a Chain-of-Thought (CoT) prompt for the given words, with support for both zero-shot and one-shot modes.
-
+    Generate a Chain-of-Thought (CoT) prompt for the given words, using Mustache templates.
+    
     :param words: List of words for the CoT reasoning prompt
     :param include_category: Boolean, whether the agent knows the category it is trying to group
     :param shot_type: Specifies whether to use zero-shot or one-shot prompting ("zero-shot" or "one-shot")
+    :param category: The category to be passed into the prompt if include_category is True
     :return: The generated CoT prompt
     """
-    
-    # One-shot example when the agent knows the category
-    example_with_category = """
-Here are some words: apple, banana, orange, grape, car, truck, plane, train.
-You are grouping words into the category 'fruits.' Group four words from this list that belong to the category of 'fruits.'
+    # Prepare the data to pass into the Mustache template
+    words_str = ', '.join(words)
 
-Example Response:
-Apple, banana, orange, and grape belong to the category of 'fruits.' These are all edible, natural products that grow on trees or vines. The other words are vehicles, which do not belong in this group.
-"""
-
-    # One-shot example when the agent does not know the category
-    example_without_category = """
-Here are some words: apple, banana, orange, grape, car, truck, plane, train.
-Group four of these words together based on their similarities, but do not provide the category name.
-
-Example Response:
-Apple, banana, orange, and grape all share a common characteristic: they are types of fruit. They are natural, edible, and grow on trees or vines. The other words are vehicles, so they do not belong in this group.
-"""
-
-    # Now provide the actual prompt with the words
     if include_category:
-        actual_prompt = f"Here are some words: {', '.join(words)}. You are grouping words into a specific category. Group four of these words that belong to that category."
-    else:
-        actual_prompt = f"Here are some words: {', '.join(words)}. Group four of these words together based on their similarities, but do not provide the category name."
+        if category is None:
+            raise ValueError("Category must be provided when include_category=True")
+        
+        # Use the template for including category
+        data = {
+            "words": words_str,
+            "category": category
+        }
+        prompt = get_prompt("cot_with_category", **data)
 
-    # Return the prompt based on the shot type (zero-shot or one-shot) and include_category
+        # Load one-shot example from Mustache file
+        one_shot_example = get_prompt("one_shot_with_category")
+        
+    else:
+        # Use the template for not including category
+        data = {
+            "words": words_str
+        }
+        prompt = get_prompt("cot_without_category", **data)
+
+        # Load one-shot example from Mustache file
+        one_shot_example = get_prompt("one_shot_without_category")
+
+    # If shot_type is one-shot, prepend the one-shot example to the actual prompt
     if shot_type == "one-shot":
-        if include_category:
-            return example_with_category + actual_prompt
-        else:
-            return example_without_category + actual_prompt
-    else:  # zero-shot
-        return actual_prompt
+        prompt = one_shot_example + prompt
+
+    return prompt
 
 def get_cot_response(prompt: str) -> str:
     """
