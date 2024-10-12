@@ -7,7 +7,10 @@ import json
 # the repository for this data is at https://github.com/Eyefyre/NYT-Connections-Answers
 GAME_DATA_ENDPOINT = "https://raw.githubusercontent.com/Eyefyre/NYT-Connections-Answers/refs/heads/main/connections.json"
 
-class GameOverException(Exception): pass
+
+class GameOverException(Exception):
+    pass
+
 
 @dataclass
 class Category:
@@ -20,14 +23,14 @@ class Category:
 
     def matches(self, words: list[str]) -> bool:
         return set(words) == set(self.members)
-    
+
 
 class Connections:
 
     @property
     def all_words(self) -> list[str]:
         return [
-            word 
+            word
             for group in self.groups
             for word in group.members
         ]
@@ -43,7 +46,7 @@ class Connections:
         grouped_categories = [
             self.groups[i:i + 4] for i in range(0, len(self.groups), 4)
         ]
-        
+
         # Format each group into the desired string representation
         return [
             [
@@ -51,11 +54,12 @@ class Connections:
                     "level": group.level,
                     "group": group.group,
                     "members": group.members
-                } 
+                }
                 for group in group_list
             ]
             for group_list in grouped_categories
         ]
+
     def __init__(self, groups: list[Category], group_size: int = 4, max_strikes: int = 9999):
         """
         Initialize a Connections object with a list of groups and their associated members.
@@ -67,7 +71,8 @@ class Connections:
         """
         # Check that all groups have the same size
         if not all(len(group.members) == group_size for group in groups):
-            raise ValueError(f"All groups must have exactly {group_size} members")
+            raise ValueError(f"All groups must have exactly {
+                             group_size} members")
 
         self._max_strikes = max_strikes
         self._og_groups = groups
@@ -85,7 +90,8 @@ class Connections:
         """
 
         if self.current_strikes >= self._max_strikes:
-            raise GameOverException("Game over. You've reached the max number of strikes!")
+            raise GameOverException(
+                "Game over. You've reached the max number of strikes!")
 
         matches = [
             group.matches(words) for group in self.groups
@@ -96,13 +102,14 @@ class Connections:
         if not good_guess:
             self.current_strikes += 1
             return None
-        
+
         matched_group = matches.index(True)
         return self.groups.pop(matched_group)
-    
+
     def reset(self):
         self.groups = self._og_groups
         self.current_strikes = 0
+
 
 def sample_game() -> Connections:
     """
@@ -121,6 +128,7 @@ def sample_game() -> Connections:
 
     return Connections(categories)
 
+
 def mixed_game() -> Connections:
     """
     Returns a Connections object with a sample of 4 categories from historical game data.
@@ -132,11 +140,11 @@ def mixed_game() -> Connections:
         raise Exception(f"Failed to get connections data: {resp.status_code}")
     games = resp.json()
 
-    categories = [ ]
+    categories = []
     for game in games:
         categories.extend(game["answers"])
-    
-    categories = [ Category(**category) for category in categories ]
+
+    categories = [Category(**category) for category in categories]
 
     sampled_categories = random.sample(categories, 4)
 
@@ -149,11 +157,16 @@ def load_daily_board() -> Connections:
     FOR TESTING. REMOVE ME!
     """
     return Connections([
-        Category(level=0, group="WET WEATHER", members=["HAIL", "RAIN", "SLEET", "SNOW"]),
-        Category(level=1, group="NBA TEAMS", members=["BUCKS", "HEAT", "JAZZ", "NETS"]),
-        Category(level=2, group="KEYBOARD KEYS", members=["OPTION", "RETURN", "SHIFT", "TAB"]),
-        Category(level=3, group="PALINDROMES", members=["KAYAK", "LEVEL", "MOM", "RACECAR"])
+        Category(level=0, group="WET WEATHER", members=[
+                 "HAIL", "RAIN", "SLEET", "SNOW"]),
+        Category(level=1, group="NBA TEAMS", members=[
+                 "BUCKS", "HEAT", "JAZZ", "NETS"]),
+        Category(level=2, group="KEYBOARD KEYS", members=[
+                 "OPTION", "RETURN", "SHIFT", "TAB"]),
+        Category(level=3, group="PALINDROMES", members=[
+                 "KAYAK", "LEVEL", "MOM", "RACECAR"])
     ])
+
 
 def load_games() -> list[dict]:
     """Load all games from the remote endpoint."""
@@ -161,6 +174,7 @@ def load_games() -> list[dict]:
     if resp.status_code != 200:
         raise Exception(f"Failed to get connections data: {resp.status_code}")
     return resp.json()
+
 
 def save_specific_game_indices_to_json(indices: list[int], filename='connections.json'):
     """Save the specified game connections to a JSON file."""
@@ -170,11 +184,13 @@ def save_specific_game_indices_to_json(indices: list[int], filename='connections
     for idx in indices:
         if idx < len(games):
             sampled_game = games[idx]
-            categories.extend(sampled_game["answers"])  # Collect categories from this game
+            # Collect categories from this game
+            categories.extend(sampled_game["answers"])
 
     # Save the categories to JSON
     with open(filename, 'w') as f:
         json.dump(categories, f)
+
 
 def load_json_to_connections(filename: str) -> Connections:
     """Load categories from a JSON file into a Connections object."""
@@ -183,18 +199,22 @@ def load_json_to_connections(filename: str) -> Connections:
     categories = [Category(**item) for item in data]
     return Connections(categories)
 
+
 if __name__ == "__main__":
     icl_indicies = [218, 348, 390, 64, 158, 197, 77, 401, 219, 284]
-    test_indices = [469, 4, 113, 466, 39, 301, 312, 254, 15, 239, 204, 149, 209, 25, 276, 132, 208, 428, 272, 142]
+    test_indices = [469, 4, 113, 466, 39, 301, 312, 254, 15,
+                    239, 204, 149, 209, 25, 276, 132, 208, 428, 272, 142]
 
     # Save the specific game connections to a JSON file
-    save_specific_game_indices_to_json(icl_indicies, filename='icl_connections.json')
+    save_specific_game_indices_to_json(
+        icl_indicies, filename='icl_connections.json')
 
     # Load the connections from the saved JSON file
     icl_connections = load_json_to_connections('icl_connections.json')
 
     # Save the specific game connections to a JSON file
-    save_specific_game_indices_to_json(test_indices, filename='test_connections.json')
+    save_specific_game_indices_to_json(
+        test_indices, filename='test_connections.json')
 
     # Load the connections from the saved JSON file
     test_connections = load_json_to_connections('test_connections.json')

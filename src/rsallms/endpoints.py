@@ -19,6 +19,11 @@ class Endpoint:
     :param model: the model to use for the chat completion endpoint
     """
 
+    DEFAULT_URLS = {
+        "oai": "https://api.openai.com/",
+        "groq": "https://api.groq.com/openai/"
+    }
+
     base_url: str
     model: str
     api_key: str | None = None
@@ -31,6 +36,8 @@ class Endpoint:
 
     def respond(self, message: str, system_prompt: str | None = None) -> str:
         headers = {"Content-Type": "application/json"}
+        if self.api_key is not None:
+            headers["Authorization"] = f"Bearer {self.api_key}"
 
         messages = [{"role": "user", "content": message}]
         if system_prompt is not None:

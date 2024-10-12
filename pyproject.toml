@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "rsa-llms"
-version = "0.0.2"
+name = "rsallms"
+version = "0.0.3"
 requires-python = ">= 3.12"
 readme = "README.md"
 description = "A Python library for solving Connections games using the Rational Speech-Act (RSA) framework"
