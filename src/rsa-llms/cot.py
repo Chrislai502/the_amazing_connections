@@ -4,8 +4,10 @@ from .game import Connections, load_json_to_connections, GameOverException
 
 # Define model configuration for CoT prompting
 ENDPOINTS = {
-    "cot_model": Endpoint("http://localhost:11434", model="gpt-3.5")  # Adjust the model and endpoint URL as needed
+    # Adjust the model and endpoint URL as needed
+    "cot_model": Endpoint("http://localhost:11434", model="gpt-3.5")
 }
+
 
 def cot_connections_solver(game: Connections, include_category=True, shot_type="zero-shot") -> list[bool]:
     """
@@ -24,9 +26,11 @@ def cot_connections_solver(game: Connections, include_category=True, shot_type="
 
         # CoT Prompting: Generate reasoning for the category (if known) or based on similarities
         if include_category:
-            cot_prompt = generate_cot_prompt(curr_group.members, include_category, shot_type, category=curr_group.group)
+            cot_prompt = generate_cot_prompt(
+                curr_group.members, include_category, shot_type, category=curr_group.group)
         else:
-            cot_prompt = generate_cot_prompt(curr_group.members, include_category, shot_type)
+            cot_prompt = generate_cot_prompt(
+                curr_group.members, include_category, shot_type)
 
         category_utterance = get_cot_response(cot_prompt)
 
@@ -57,7 +61,7 @@ def cot_connections_solver(game: Connections, include_category=True, shot_type="
 def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero-shot", category=None) -> str:
     """
     Generate a Chain-of-Thought (CoT) prompt for the given words, using Mustache templates.
-    
+
     :param words: List of words for the CoT reasoning prompt
     :param include_category: Boolean, whether the agent knows the category it is trying to group
     :param shot_type: Specifies whether to use zero-shot or one-shot prompting ("zero-shot" or "one-shot")
@@ -69,8 +73,9 @@ def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero
 
     if include_category:
         if category is None:
-            raise ValueError("Category must be provided when include_category=True")
-        
+            raise ValueError(
+                "Category must be provided when include_category=True")
+
         # Use the template for including category
         data = {
             "words": words_str,
@@ -80,7 +85,7 @@ def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero
 
         # Load one-shot example from Mustache file
         one_shot_example = get_prompt("one_shot_with_category")
-        
+
     else:
         # Use the template for not including category
         data = {
@@ -97,17 +102,19 @@ def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero
 
     return prompt
 
+
 def get_cot_response(prompt: str) -> str:
     """
     Simulated response from the CoT model for the provided prompt. This is useful for testing.
     """
     print(f"Prompt sent to model:\n{prompt}\n")
-    
+
     # Simulated model response
     if "category" in prompt:
         return "Apple, banana, orange, and grape belong to the category of 'fruits.' These are all edible, natural products."
     else:
         return "Apple, banana, orange, and grape all share a common characteristic: they are types of fruit."
+
 
 def extract_words_from_response(response: str) -> list[str]:
     """
@@ -122,7 +129,7 @@ def extract_words_from_response(response: str) -> list[str]:
 
     # Search for the four words in the response
     match = re.search(pattern, response)
-    
+
     if match:
         # Extract the words and split them into a list, handling commas and conjunctions
         words = re.findall(r'\b\w+\b', match.group(0))
@@ -131,26 +138,37 @@ def extract_words_from_response(response: str) -> list[str]:
         # If no match is found, return an empty list or handle it appropriately
         return []
 
+
 def script_entrypoint():
     # Load the game from the provided ICL connections data
-    icl_connections = load_json_to_connections(filename='src/rsa-llms/icl_connections.json')
+    icl_connections = load_json_to_connections(
+        filename='src/rsa-llms/icl_connections.json')
 
     # Test the solver with zero-shot and one-shot modes for both include_category options
     print("Starting CoT solver in zero-shot mode where agent knows the category")
-    cot_score_zero_shot_with_category = cot_connections_solver(icl_connections, include_category=True, shot_type="zero-shot")
-    print(f"CoT solver in zero-shot mode where agent knows the category completed {cot_score_zero_shot_with_category} levels.")
+    cot_score_zero_shot_with_category = cot_connections_solver(
+        icl_connections, include_category=True, shot_type="zero-shot")
+    print(f"CoT solver in zero-shot mode where agent knows the category completed {
+          cot_score_zero_shot_with_category} levels.")
 
     print("\nStarting CoT solver in one-shot mode where agent knows the category")
-    cot_score_one_shot_with_category = cot_connections_solver(icl_connections, include_category=True, shot_type="one-shot")
-    print(f"CoT solver in one-shot mode where agent knows the category completed {cot_score_one_shot_with_category} levels.")
+    cot_score_one_shot_with_category = cot_connections_solver(
+        icl_connections, include_category=True, shot_type="one-shot")
+    print(f"CoT solver in one-shot mode where agent knows the category completed {
+          cot_score_one_shot_with_category} levels.")
 
     print("\nStarting CoT solver in zero-shot mode where agent does not know the category")
-    cot_score_zero_shot_without_category = cot_connections_solver(icl_connections, include_category=False, shot_type="zero-shot")
-    print(f"CoT solver in zero-shot mode where agent does not know the category completed {cot_score_zero_shot_without_category} levels.")
+    cot_score_zero_shot_without_category = cot_connections_solver(
+        icl_connections, include_category=False, shot_type="zero-shot")
+    print(f"CoT solver in zero-shot mode where agent does not know the category completed {
+          cot_score_zero_shot_without_category} levels.")
 
     print("\nStarting CoT solver in one-shot mode where agent does not know the category")
-    cot_score_one_shot_without_category = cot_connections_solver(icl_connections, include_category=False, shot_type="one-shot")
-    print(f"CoT solver in one-shot mode where agent does not know the category completed {cot_score_one_shot_without_category} levels.")
+    cot_score_one_shot_without_category = cot_connections_solver(
+        icl_connections, include_category=False, shot_type="one-shot")
+    print(f"CoT solver in one-shot mode where agent does not know the category completed {
+          cot_score_one_shot_without_category} levels.")
+
 
 if __name__ == "__main__":
     script_entrypoint()

@@ -193,7 +193,7 @@ if __name__ == "__main__":
     # Load the connections from the saved JSON file
     icl_connections = load_json_to_connections('icl_connections.json')
 
-        # Save the specific game connections to a JSON file
+    # Save the specific game connections to a JSON file
     save_specific_game_indices_to_json(test_indices, filename='test_connections.json')
 
     # Load the connections from the saved JSON file

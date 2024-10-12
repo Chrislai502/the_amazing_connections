@@ -1,6 +1,4 @@
 {
-    "include": [
-        "src/rsa-llms/**/*.py",
-    ],
-    "typeCheckingMode": "standard",
+    "include": ["src/rsa-llms/**/*.py"],
+    "typeCheckingMode": "standard"
 }

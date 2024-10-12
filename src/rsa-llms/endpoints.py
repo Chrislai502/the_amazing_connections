@@ -4,9 +4,11 @@ import importlib
 from dataclasses import dataclass
 import importlib.resources
 
-import chevron, requests
+import chevron
+import requests
 
 PROMPTS_FOLDER = importlib.resources.files("rsa-llms").joinpath("prompts")
+
 
 @dataclass
 class Endpoint:
@@ -30,7 +32,7 @@ class Endpoint:
     def respond(self, message: str, system_prompt: str | None = None) -> str:
         headers = {"Content-Type": "application/json"}
 
-        messages = [ {"role": "user", "content": message} ]
+        messages = [{"role": "user", "content": message}]
         if system_prompt is not None:
             messages.insert(0, {"role": "system", "content": system_prompt})
 
@@ -48,6 +50,7 @@ class Endpoint:
             raise e
 
         return json_response['choices'][0]['message']['content']
+
 
 def get_prompt(name: str, **kwargs) -> str:
     with PROMPTS_FOLDER.joinpath(f"{name}.mustache").open() as f:

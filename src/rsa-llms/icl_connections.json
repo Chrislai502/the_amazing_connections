@@ -1,1 +1,202 @@
-[{"level": 0, "group": "DECEIVE", "members": ["CON", "DUPE", "FOOL", "TRICK"]}, {"level": 1, "group": "INSIDE INFO", "members": ["DOPE", "SCOOP", "SKINNY", "WORD"]}, {"level": 2, "group": "TILT TO ONE SIDE", "members": ["CANT", "LEAN", "LIST", "SLOPE"]}, {"level": 3, "group": "WORDS SPELLED WITH AN UPSIDE-DOWN CALCULATOR", "members": ["BOOB", "EGGSHELL", "GIGGLE", "HELLO"]}, {"level": 0, "group": "ADVERTISING FORMAT", "members": ["BANNER", "BILLBOARD", "POSTER", "SIGN"]}, {"level": 1, "group": "INAUGURAL", "members": ["FIRST", "INITIAL", "MAIDEN", "PREMIER"]}, {"level": 2, "group": "ADVOCATE FOR", "members": ["BACK", "CHAMPION", "ENDORSE", "SUPPORT"]}, {"level": 3, "group": "PRONOUN PLUS \u201cE\u201d", "members": ["HERE", "THEME", "USE", "WEE"]}, {"level": 0, "group": "BIOLOGICAL BUILDING BLOCKS", "members": ["ATOM", "CELL", "MOLECULE", "PROTEIN"]}, {"level": 1, "group": "PURCHASES FOR A BABY", "members": ["BOTTLE", "CRIB", "MOBILE", "RATTLE"]}, {"level": 2, "group": "OBJECTS PLAYED AS INSTRUMENTS", "members": ["JUG", "SAW", "SPOONS", "WASHBOARD"]}, {"level": 3, "group": "___ TAG", "members": ["DOG", "FREEZE", "PHONE", "PRICE"]}, {"level": 0, "group": "STATES OF MATTER", "members": ["GAS", "LIQUID", "PLASMA", "SOLID"]}, {"level": 1, "group": "ENERGY", "members": ["JUICE", "SPIRIT", "STEAM", "VIGOR"]}, {"level": 2, "group": "CLASSICAL ELEMENTS", "members": ["AIR", "EARTH", "FIRE", "WATER"]}, {"level": 3, "group": "THINGS WITH RINGS", "members": ["CIRCUS", "SATURN", "TREE", "WEDDING"]}, {"level": 0, "group": "BODYWEIGHT EXERCISES", "members": ["DIPS", "LUNGES", "PLANKS", "SQUATS"]}, {"level": 1, "group": "EMAIL SIGN-OFFS", "members": ["BEST", "CHEERS", "REGARDS", "THANKS"]}, {"level": 2, "group": "M.L.B. TEAMS, FOR SHORT", "members": ["CARDS", "JAYS", "NATS", "YANKS"]}, {"level": 3, "group": "ELIZABETHS (AND ONE ELISABETH)", "members": ["BANKS", "MOSS", "TAYLOR", "WARREN"]}, {"level": 0, "group": "ROAD NAMES", "members": ["ALLEY", "DRIVE", "LANE", "STREET"]}, {"level": 1, "group": "PAPER IN A BOOK", "members": ["FOLIO", "LEAF", "PAGE", "SHEET"]}, {"level": 2, "group": "RESTRAIN", "members": ["CHECK", "CURB", "LIMIT", "STEM"]}, {"level": 3, "group": "THINGS YOU CAN DO TO YOUR NOSE", "members": ["BLOW", "HOLD", "PICK", "THUMB"]}, {"level": 0, "group": "STATES OF ELATION", "members": ["BLISS", "CLOUD NINE", "HEAVEN", "PARADISE"]}, {"level": 1, "group": "SCAM", "members": ["CON", "FAST ONE", "HUSTLE", "RACKET"]}, {"level": 2, "group": "GREETING GESTURES", "members": ["HIGH FIVE", "HUG", "SHAKE", "WAVE"]}, {"level": 3, "group": "___ LIST", "members": ["BUCKET", "GUEST", "TOP TEN", "WISH"]}, {"level": 0, "group": "BUILDINGS AROUND TOWN", "members": ["BANK", "LAUNDROMAT", "POST OFFICE", "SUPERMARKET"]}, {"level": 1, "group": "HINDER", "members": ["CHECK", "CURB", "HAMPER", "INHIBIT"]}, {"level": 2, "group": "ANIMAL GROUP NAMES", "members": ["PACK", "PRIDE", "SCHOOL", "SWARM"]}, {"level": 3, "group": "STARTS OF U.S. PRESIDENTS", "members": ["BIDE", "CART", "NIX", "WASHING"]}, {"level": 0, "group": "DATA SET DATA", "members": ["MEAN", "MEDIAN", "MODE", "RANGE"]}, {"level": 1, "group": "CHEMISTRY TERMS", "members": ["BASE", "BOND", "ELEMENT", "SOLUTION"]}, {"level": 2, "group": "ADJECTIVE INTENSIFIERS", "members": ["AWFUL", "PRETTY", "RATHER", "REAL"]}, {"level": 3, "group": "RADIO HALL OF FAME MEMBERS", "members": ["GLASS", "GROSS", "KING", "STERN"]}, {"level": 0, "group": "JUMPING ANIMALS", "members": ["CRICKET", "FROG", "HARE", "KANGAROO"]}, {"level": 1, "group": "APPLY PRESSURE TO", "members": ["CRUSH", "MASH", "PRESS", "SQUASH"]}, {"level": 2, "group": "OLYMPIC SPORTS", "members": ["BREAKING", "HOCKEY", "SKELETON", "TRAMPOLINE"]}, {"level": 3, "group": "THINGS YOU CAN SET", "members": ["MOOD", "RECORD", "TABLE", "VOLLEYBALL"]}]
+[
+    {
+        "level": 0,
+        "group": "DECEIVE",
+        "members": ["CON", "DUPE", "FOOL", "TRICK"]
+    },
+    {
+        "level": 1,
+        "group": "INSIDE INFO",
+        "members": ["DOPE", "SCOOP", "SKINNY", "WORD"]
+    },
+    {
+        "level": 2,
+        "group": "TILT TO ONE SIDE",
+        "members": ["CANT", "LEAN", "LIST", "SLOPE"]
+    },
+    {
+        "level": 3,
+        "group": "WORDS SPELLED WITH AN UPSIDE-DOWN CALCULATOR",
+        "members": ["BOOB", "EGGSHELL", "GIGGLE", "HELLO"]
+    },
+    {
+        "level": 0,
+        "group": "ADVERTISING FORMAT",
+        "members": ["BANNER", "BILLBOARD", "POSTER", "SIGN"]
+    },
+    {
+        "level": 1,
+        "group": "INAUGURAL",
+        "members": ["FIRST", "INITIAL", "MAIDEN", "PREMIER"]
+    },
+    {
+        "level": 2,
+        "group": "ADVOCATE FOR",
+        "members": ["BACK", "CHAMPION", "ENDORSE", "SUPPORT"]
+    },
+    {
+        "level": 3,
+        "group": "PRONOUN PLUS \u201cE\u201d",
+        "members": ["HERE", "THEME", "USE", "WEE"]
+    },
+    {
+        "level": 0,
+        "group": "BIOLOGICAL BUILDING BLOCKS",
+        "members": ["ATOM", "CELL", "MOLECULE", "PROTEIN"]
+    },
+    {
+        "level": 1,
+        "group": "PURCHASES FOR A BABY",
+        "members": ["BOTTLE", "CRIB", "MOBILE", "RATTLE"]
+    },
+    {
+        "level": 2,
+        "group": "OBJECTS PLAYED AS INSTRUMENTS",
+        "members": ["JUG", "SAW", "SPOONS", "WASHBOARD"]
+    },
+    {
+        "level": 3,
+        "group": "___ TAG",
+        "members": ["DOG", "FREEZE", "PHONE", "PRICE"]
+    },
+    {
+        "level": 0,
+        "group": "STATES OF MATTER",
+        "members": ["GAS", "LIQUID", "PLASMA", "SOLID"]
+    },
+    {
+        "level": 1,
+        "group": "ENERGY",
+        "members": ["JUICE", "SPIRIT", "STEAM", "VIGOR"]
+    },
+    {
+        "level": 2,
+        "group": "CLASSICAL ELEMENTS",
+        "members": ["AIR", "EARTH", "FIRE", "WATER"]
+    },
+    {
+        "level": 3,
+        "group": "THINGS WITH RINGS",
+        "members": ["CIRCUS", "SATURN", "TREE", "WEDDING"]
+    },
+    {
+        "level": 0,
+        "group": "BODYWEIGHT EXERCISES",
+        "members": ["DIPS", "LUNGES", "PLANKS", "SQUATS"]
+    },
+    {
+        "level": 1,
+        "group": "EMAIL SIGN-OFFS",
+        "members": ["BEST", "CHEERS", "REGARDS", "THANKS"]
+    },
+    {
+        "level": 2,
+        "group": "M.L.B. TEAMS, FOR SHORT",
+        "members": ["CARDS", "JAYS", "NATS", "YANKS"]
+    },
+    {
+        "level": 3,
+        "group": "ELIZABETHS (AND ONE ELISABETH)",
+        "members": ["BANKS", "MOSS", "TAYLOR", "WARREN"]
+    },
+    {
+        "level": 0,
+        "group": "ROAD NAMES",
+        "members": ["ALLEY", "DRIVE", "LANE", "STREET"]
+    },
+    {
+        "level": 1,
+        "group": "PAPER IN A BOOK",
+        "members": ["FOLIO", "LEAF", "PAGE", "SHEET"]
+    },
+    {
+        "level": 2,
+        "group": "RESTRAIN",
+        "members": ["CHECK", "CURB", "LIMIT", "STEM"]
+    },
+    {
+        "level": 3,
+        "group": "THINGS YOU CAN DO TO YOUR NOSE",
+        "members": ["BLOW", "HOLD", "PICK", "THUMB"]
+    },
+    {
+        "level": 0,
+        "group": "STATES OF ELATION",
+        "members": ["BLISS", "CLOUD NINE", "HEAVEN", "PARADISE"]
+    },
+    {
+        "level": 1,
+        "group": "SCAM",
+        "members": ["CON", "FAST ONE", "HUSTLE", "RACKET"]
+    },
+    {
+        "level": 2,
+        "group": "GREETING GESTURES",
+        "members": ["HIGH FIVE", "HUG", "SHAKE", "WAVE"]
+    },
+    {
+        "level": 3,
+        "group": "___ LIST",
+        "members": ["BUCKET", "GUEST", "TOP TEN", "WISH"]
+    },
+    {
+        "level": 0,
+        "group": "BUILDINGS AROUND TOWN",
+        "members": ["BANK", "LAUNDROMAT", "POST OFFICE", "SUPERMARKET"]
+    },
+    {
+        "level": 1,
+        "group": "HINDER",
+        "members": ["CHECK", "CURB", "HAMPER", "INHIBIT"]
+    },
+    {
+        "level": 2,
+        "group": "ANIMAL GROUP NAMES",
+        "members": ["PACK", "PRIDE", "SCHOOL", "SWARM"]
+    },
+    {
+        "level": 3,
+        "group": "STARTS OF U.S. PRESIDENTS",
+        "members": ["BIDE", "CART", "NIX", "WASHING"]
+    },
+    {
+        "level": 0,
+        "group": "DATA SET DATA",
+        "members": ["MEAN", "MEDIAN", "MODE", "RANGE"]
+    },
+    {
+        "level": 1,
+        "group": "CHEMISTRY TERMS",
+        "members": ["BASE", "BOND", "ELEMENT", "SOLUTION"]
+    },
+    {
+        "level": 2,
+        "group": "ADJECTIVE INTENSIFIERS",
+        "members": ["AWFUL", "PRETTY", "RATHER", "REAL"]
+    },
+    {
+        "level": 3,
+        "group": "RADIO HALL OF FAME MEMBERS",
+        "members": ["GLASS", "GROSS", "KING", "STERN"]
+    },
+    {
+        "level": 0,
+        "group": "JUMPING ANIMALS",
+        "members": ["CRICKET", "FROG", "HARE", "KANGAROO"]
+    },
+    {
+        "level": 1,
+        "group": "APPLY PRESSURE TO",
+        "members": ["CRUSH", "MASH", "PRESS", "SQUASH"]
+    },
+    {
+        "level": 2,
+        "group": "OLYMPIC SPORTS",
+        "members": ["BREAKING", "HOCKEY", "SKELETON", "TRAMPOLINE"]
+    },
+    {
+        "level": 3,
+        "group": "THINGS YOU CAN SET",
+        "members": ["MOOD", "RECORD", "TABLE", "VOLLEYBALL"]
+    }
+]
