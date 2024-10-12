@@ -2,7 +2,7 @@
 
 from .endpoints import Endpoint
 from .game import Connections, load_daily_board, GameOverException
-from .rsa import PragmaticListener, PragmaticSpeaker, LiteralListener
+from .solvers.rsa import PragmaticListener, PragmaticSpeaker, LiteralListener
 
 # Define model configurations
 ENDPOINTS = {
