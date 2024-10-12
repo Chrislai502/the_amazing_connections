@@ -9,5 +9,5 @@ To run the `script_entrypoint` in `solver.py`:
 ```
 git clone
 pip install -e .
-python -m rsa-llms.solver
+python -m rsallms.solver
 ```
