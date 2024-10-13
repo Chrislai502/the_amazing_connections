@@ -4,9 +4,9 @@ from .endpoints import Endpoint
 from .game import Connections, load_json_to_connections, GameOverException
 
 
-def naive_connections_solver(board) -> list[bool]:
+def naive_connections_solver(board: Connections) -> list[bool]:
     """
-    Solve a Connections game using RSA models.
+    Solve a Connections game with simple prompting.
 
     :param game: the Connections game to solve
     :return: a list of booleans indicating which levels were solved
@@ -15,9 +15,9 @@ def naive_connections_solver(board) -> list[bool]:
     solves = [False, False, False, False]
 
     while level < 4:
-        curr_group = board[level]
+        curr_group = board.get_groups_by_level(level)[0]
 
-        guess_word_groups = guess(board, curr_group['members'][0])
+        guess_word_groups = guess(board, curr_group.members[0])
 
         # Check if any of the guessed sets match the target
         for guess in guess_word_groups:

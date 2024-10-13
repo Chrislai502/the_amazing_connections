@@ -81,7 +81,7 @@ def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero
             "words": words_str,
             "category": category
         }
-        prompt = get_prompt("cot_with_category", **data)
+        prompt = get_prompt("naive_with_category", **data)
 
         # Load one-shot example from Mustache file
         one_shot_example = get_prompt("one_shot_with_category")
@@ -91,7 +91,7 @@ def generate_cot_prompt(words: list[str], include_category=True, shot_type="zero
         data = {
             "words": words_str
         }
-        prompt = get_prompt("cot_without_category", **data)
+        prompt = get_prompt("naive_without_category", **data)
 
         # Load one-shot example from Mustache file
         one_shot_example = get_prompt("one_shot_without_category")
