@@ -1,8 +1,8 @@
 
-import importlib
+import importlib.resources
 
 from dataclasses import dataclass
-import importlib.resources
+from typing import Callable
 
 import chevron
 import requests
@@ -17,6 +17,7 @@ class Endpoint:
 
     :param base_url: the base URL of the API
     :param model: the model to use for the chat completion endpoint
+    :param api_key: (optional) the api key necessary to complete requests
     """
 
     DEFAULT_URLS = {
@@ -29,6 +30,11 @@ class Endpoint:
     api_key: str | None = None
 
     CHAT_COMPLETION = "v1/chat/completions"
+
+    def __post_init__(self):
+        # resolve commonly used endpoints
+        if self.base_url in Endpoint.DEFAULT_URLS:
+            self.base_url = Endpoint.DEFAULT_URLS[self.base_url]
 
     @property
     def chat_url(self):
@@ -57,6 +63,15 @@ class Endpoint:
             raise e
 
         return json_response['choices'][0]['message']['content']
+
+
+class CannedResponder(Endpoint):
+    def __init__(self, responder_func: Callable[[str, str | None], str]):
+        super().__init__("", "")
+        self.responder = responder_func
+
+    def respond(self, message, system_prompt=None):
+        return self.responder(message, system_prompt)
 
 
 def get_prompt(name: str, **kwargs) -> str:
