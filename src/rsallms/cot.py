@@ -149,26 +149,22 @@ def script_entrypoint():
     print("Starting CoT solver in zero-shot mode where agent knows the category")
     cot_score_zero_shot_with_category = cot_connections_solver(
         game_to_solve, include_category=True, shot_type="zero-shot")
-    print(f"CoT solver in zero-shot mode where agent knows the category completed 
-          {cot_score_zero_shot_with_category} levels.")
+    print(f"CoT solver in zero-shot mode where agent knows the category completed {cot_score_zero_shot_with_category} levels.")
 
     print("\nStarting CoT solver in one-shot mode where agent knows the category")
     cot_score_one_shot_with_category = cot_connections_solver(
         game_to_solve, include_category=True, shot_type="one-shot")
-    print(f"CoT solver in one-shot mode where agent knows the category completed 
-          {cot_score_one_shot_with_category} levels.")
+    print(f"CoT solver in one-shot mode where agent knows the category completed {cot_score_one_shot_with_category} levels.")
 
     print("\nStarting CoT solver in zero-shot mode where agent does not know the category")
     cot_score_zero_shot_without_category = cot_connections_solver(
         game_to_solve, include_category=False, shot_type="zero-shot")
-    print(f"CoT solver in zero-shot mode where agent does not know the category completed 
-          {cot_score_zero_shot_without_category} levels.")
+    print(f"CoT solver in zero-shot mode where agent does not know the category completed {cot_score_zero_shot_without_category} levels.")
 
     print("\nStarting CoT solver in one-shot mode where agent does not know the category")
     cot_score_one_shot_without_category = cot_connections_solver(
         game_to_solve, include_category=False, shot_type="one-shot")
-    print(f"CoT solver in one-shot mode where agent does not know the category completed 
-          {cot_score_one_shot_without_category} levels.")
+    print(f"CoT solver in one-shot mode where agent does not know the category completed {cot_score_one_shot_without_category} levels.")
 
 
 if __name__ == "__main__":
