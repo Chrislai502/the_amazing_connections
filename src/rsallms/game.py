@@ -1,3 +1,4 @@
+# game.py
 
 import random
 from dataclasses import dataclass, asdict
@@ -87,7 +88,7 @@ class Connections:
         Initialize a Connections object with a list of categories and
         their associated members.
 
-        :param groups: a list of Category objects
+        :param categories: a list of Category objects
         :param group_size: the size of each group (default: 4)
 
         :raises ValueError: if not all groups have the size specified
@@ -95,19 +96,18 @@ class Connections:
         """
         # Check that all groups have the same size
         if not all(len(group.members) == group_size for group in categories):
-            raise ValueError(f"All groups must have exactly 
-                             {group_size} members")
+            raise ValueError(f"All groups must have exactly {group_size} members")
 
         self._max_strikes = max_strikes
-        self._og_groups = categories
+        self._og_groups = categories.copy()
         self.group_size = group_size
-        self.categories = categories
+        self.categories = categories.copy()
         self.current_strikes = starting_strikes
 
     def get_groups_by_level(self, level: int) -> list[Category]:
         """Filter the groups in this game by their level"""
         return [group for group in self.categories if group.level == level]
-    
+
     def json(self) -> dict[str, list[dict[str, int | str | list[str]]] | int]:
         return {
             "groups": [asdict(g) for g in self.categories],
@@ -121,7 +121,6 @@ class Connections:
         Return the category associated with the guessed words if they match a category
         (and removes that category from the game), otherwise return None and add a strike
         """
-
         if self.current_strikes >= self._max_strikes:
             raise GameOverException(
                 "Game over. You've reached the max number of strikes!")
@@ -137,13 +136,14 @@ class Connections:
             return None
 
         matched_group = matches.index(True)
-        return self.categories.pop(matched_group)
+        solved_category = self.categories.pop(matched_group)
+        return solved_category
 
     def reset(self):
         """
         Reset the game to its initial state
         """
-        self.categories = self._og_groups
+        self.categories = self._og_groups.copy()
         self.current_strikes = 0
 
 
@@ -209,7 +209,7 @@ def load_games() -> list[Connections]:
     resp = requests.get(GAME_DATA_ENDPOINT)
     if resp.status_code != 200:
         raise Exception(f"Failed to get connections data: {resp.status_code}")
-    
+
     raw_data = resp.json()
 
     if not isinstance(raw_data, list):
@@ -226,19 +226,20 @@ def load_games() -> list[Connections]:
 def save_specific_game_indices_to_json(indices: list[int], filename='connections.json') -> None:
     """Save the specified game connections to a JSON file."""
     games: list[Connections] = load_games()
-    categories: list[Category] = [ ]
+    categories: list[Category] = []
 
     for idx in indices:
         if idx < len(games):
             game: Connections = games[idx]
             # Collect categories from this game
-            categories.extend(game.categories)
+            categories.extend(game._og_groups)
         else:
             raise IndexError(f"Index {idx} is out of range!")
 
     # Save the categories to JSON
     with open(filename, 'w') as f:
-        json.dump(categories, f)
+        json.dump([asdict(cat) for cat in categories], f)
+
 
 def load_json_to_connections(filename: str) -> list[Connections]:
     """Load list of categories from a JSON file into list of Connections games."""
@@ -246,17 +247,17 @@ def load_json_to_connections(filename: str) -> list[Connections]:
         data = json.load(f)
 
     categories = [Category(**item) for item in data]
-    return [ Connections(categories[i:+4]) for i in range(0, len(categories), 4) ]
+    return [Connections(categories[i:i+4]) for i in range(0, len(categories), 4)]
 
 
 if __name__ == "__main__":
-    icl_indicies = [218, 348, 390, 64, 158, 197, 77, 401, 219, 284]
+    icl_indices = [218, 348, 390, 64, 158, 197, 77, 401, 219, 284]
     test_indices = [469, 4, 113, 466, 39, 301, 312, 254, 15,
                     239, 204, 149, 209, 25, 276, 132, 208, 428, 272, 142]
 
     # Save the specific game connections to a JSON file
     save_specific_game_indices_to_json(
-        icl_indicies, filename='icl_connections.json')
+        icl_indices, filename='icl_connections.json')
 
     # Load the connections from the saved JSON file
     icl_connections = load_json_to_connections('icl_connections.json')
