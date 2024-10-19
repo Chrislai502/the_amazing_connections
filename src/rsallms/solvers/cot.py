@@ -85,7 +85,7 @@ class CoTSolver(Solver):
             # If no match is found, return an empty list or handle it appropriately
             return []
 
-    def guess(self, word_bank: list[str], group_size: int = 4) -> list[str]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
         cot_prompt = CoTSolver._get_prompt(word_bank, "one-shot")
 
         reasoning = ENDPOINTS['cot_model'].respond(cot_prompt)
@@ -95,4 +95,4 @@ class CoTSolver(Solver):
         # CoT Guessing: Extract guessed words from CoT response
         guess = CoTSolver._extract_words(reasoning)
 
-        return guess
+        return tuple(guess)

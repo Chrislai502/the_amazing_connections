@@ -35,7 +35,7 @@ class NaiveSolver(Solver):
             # If no match is found, return an empty list or handle it appropriately
             return []
 
-    def guess(self, word_bank: list[str], group_size: int = 4) -> list[str]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
 
         data = {
             "words": ", ".join(word_bank)
@@ -45,4 +45,4 @@ class NaiveSolver(Solver):
         # TODO: replace the bottom two with a json structured response
         response = ENDPOINTS["default"].respond(prompt)
 
-        return NaiveSolver._extract_words(response)
+        return tuple(NaiveSolver._extract_words(response))

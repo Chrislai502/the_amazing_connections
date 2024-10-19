@@ -180,7 +180,7 @@ class RSASolver(Solver):
 
         return min(mismatches)
 
-    def guess(self, word_bank, group_size=4) -> list[str]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
 
         error_heap: list[tuple[int, list[str]]] = []
         for proposed_group in RSASolver._generate_groups(word_bank, group_size):
@@ -189,4 +189,4 @@ class RSASolver(Solver):
 
         most_correct_guess = heappop(error_heap)
         cost, words = most_correct_guess
-        return words
+        return tuple(words)
