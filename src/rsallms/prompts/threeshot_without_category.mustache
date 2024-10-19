@@ -1,0 +1,9 @@
+Here it's the puzzle: There are 16 words, which form 4 groups of 4 words. Each group has some common theme that links the words.
+You must use each of the {{num_words}} words, and use each word only once.
+Each group of 4 words are linked together in some way.
+The connection between words can be simple.
+An example of a simple connection would be {"reason":'types of fish', "words":["Bass", "Flounder", "Salmon", "Trout"]}.
+Categories can also be more complex, and require abstract or lateral thinking. An example of this type of connection would be {"reason": 'things that start with FIRE', "words": ['Ant', 'Drill', 'Island', 'Opal']}
+Here are some other combinations: {"reason":'ROAD NAMES', "words":["ALLEY", "DRIVE", "LANE", "STREET"]}.
+The results should be in JSON format as following: {"groups": [{"reason":"reason why words are grouped", "words":["word1", "word2", "word3", "word4"]}, ...]}
+Here are some words: {{words}}. Group four words from this list based on their similarities.
