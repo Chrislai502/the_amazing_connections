@@ -5,6 +5,8 @@ from dataclasses import dataclass, asdict
 import requests
 import json
 
+from .metrics import Metrics
+
 # the repository for this data is at https://github.com/Eyefyre/NYT-Connections-Answers
 GAME_DATA_ENDPOINT = "https://raw.githubusercontent.com/Eyefyre/NYT-Connections-Answers/refs/heads/main/connections.json"
 
@@ -98,11 +100,16 @@ class Connections:
         if not all(len(group.members) == group_size for group in categories):
             raise ValueError(f"All groups must have exactly {group_size} members")
 
+        self._metrics = Metrics(total_levels=len(categories))
         self._max_strikes = max_strikes
         self._og_groups = categories.copy()
         self.group_size = group_size
         self.categories = categories.copy()
         self.current_strikes = starting_strikes
+
+    def get_metrics(self) -> Metrics:
+        self._metrics.finalize_points()
+        return self._metrics
 
     def get_groups_by_level(self, level: int) -> list[Category]:
         """Filter the groups in this game by their level"""
@@ -133,16 +140,19 @@ class Connections:
 
         if not good_guess:
             self.current_strikes += 1
+            self._metrics.increment_failed_guesses()
             return None
 
         matched_group = matches.index(True)
         solved_category = self.categories.pop(matched_group)
+        self._metrics.add_solve(matches.index(True))
         return solved_category
 
     def reset(self):
         """
         Reset the game to its initial state
         """
+        self._metrics = Metrics(total_levels=len(self._og_groups))
         self.categories = self._og_groups.copy()
         self.current_strikes = 0
 
