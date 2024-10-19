@@ -7,7 +7,7 @@ from typing import Callable
 import chevron
 import requests
 
-PROMPTS_FOLDER = importlib.resources.files("rsa-llms").joinpath("prompts")
+PROMPTS_FOLDER = importlib.resources.files("rsallms").joinpath("prompts")
 
 
 @dataclass
