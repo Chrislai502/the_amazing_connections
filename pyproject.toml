@@ -12,7 +12,8 @@ readme = "README.md"
 description = "A Python library for solving Connections games using the Rational Speech-Act (RSA) framework"
 dependencies = [
     "chevron",
-    "requests"
+    "requests",
+    "python-dotenv"
 ]
 authors = [
     { name = "Nelson Lojo", email = "nelson.lojo@berkeley.edu"},

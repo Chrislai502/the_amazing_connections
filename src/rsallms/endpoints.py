@@ -3,9 +3,16 @@ import importlib.resources
 
 from dataclasses import dataclass
 from typing import Callable
+from os import environ as env
 
 import chevron
 import requests
+
+import dotenv
+try:
+    dotenv.load_dotenv()
+except:
+    print(f"Could not load environment variables. Continuing without them ...")
 
 PROMPTS_FOLDER = importlib.resources.files("rsallms").joinpath("prompts")
 
@@ -20,9 +27,15 @@ class Endpoint:
     :param api_key: (optional) the api key necessary to complete requests
     """
 
-    DEFAULT_URLS = {
-        "oai": "https://api.openai.com/",
-        "groq": "https://api.groq.com/openai/"
+    DEFAULTS = {
+        "oai": {
+            "base_url": "https://api.openai.com/",
+            "api_key": "OPENAI_API_KEY"
+        },
+        "groq": {
+            "base_url": "https://api.groq.com/openai/",
+            "api_key": "GROQ_API_KEY"
+        }
     }
 
     base_url: str
@@ -31,15 +44,16 @@ class Endpoint:
 
     CHAT_COMPLETION = "v1/chat/completions"
 
-    def __init__(self, base_url, model, api_key) -> None:
-        self.base_url = base_url
-        self.model = model
-        self.api_key = api_key
-
     def __post_init__(self):
         # resolve commonly used endpoints
-        if self.base_url in Endpoint.DEFAULT_URLS:
-            self.base_url = Endpoint.DEFAULT_URLS[self.base_url]
+        if self.base_url in Endpoint.DEFAULTS:
+            info = Endpoint.DEFAULTS[self.base_url]
+            self.base_url = info["base_url"]
+
+            api_key_env_var = info["api_key"]
+            if api_key_env_var not in env:
+                raise OSError(f"API Key {api_key_env_var} not found!")
+            self.api_key = env[api_key_env_var]
 
     @property
     def chat_url(self):
@@ -67,6 +81,11 @@ class Endpoint:
             print(response.text)
             raise e
 
+        if 'error' in json_response:
+            raise ValueError(f"Error in endpoint request!: {json_response['error']}")
+        if 'choices' not in json_response:
+            raise ValueError(f"Malformed response from endpoint!: Got: {json_response}")
+
         return json_response['choices'][0]['message']['content']
 
 
@@ -81,4 +100,11 @@ class CannedResponder(Endpoint):
 
 def get_prompt(name: str, **kwargs) -> str:
     with PROMPTS_FOLDER.joinpath(f"{name}.mustache").open() as f:
-        return chevron.render(f.read(), data=kwargs)
+        return chevron.render(f.read(), data=kwargs).strip()
+
+
+def chain_prompts(files: list[str], **kwargs) -> str:
+    content = []
+    for file in files:
+        content.append(get_prompt(file, **kwargs))
+    return "\n".join(content)
