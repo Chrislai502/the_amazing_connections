@@ -4,11 +4,11 @@ from .game import Connections, load_json_to_connections, GameOverException
 from .metrics import Metrics  # Import Metrics
 import random
 
-# Define model configuration for CoT prompting
-ENDPOINTS = {
-    # Adjust the model and endpoint URL as needed
-    "naive": Endpoint("http://localhost:11434", model="llama3.2")
-}
+# # Define model configuration for CoT prompting
+# ENDPOINTS = {
+#     # Adjust the model and endpoint URL as needed
+#     "naive": Endpoint("http://localhost:11434", model="llama3.2")
+# }
 
 
 def naive_connections_solver(game: Connections, include_category=True, shot_type="zero-shot") -> Metrics:
@@ -31,6 +31,7 @@ def naive_connections_solver(game: Connections, include_category=True, shot_type
                 board_words += [w]
     random.seed(42)
     random.shuffle(board_words)
+    system_prompt = get_prompt("system")
     while level < metrics.total_levels:
         curr_group = game.get_groups_by_level(level)[0]
 
@@ -41,7 +42,7 @@ def naive_connections_solver(game: Connections, include_category=True, shot_type
             naive_prompt = generate_naive_prompt(
                 board_words, include_category, shot_type
             )
-        category_utterance = get_naive_response(naive_prompt)
+        category_utterance = get_naive_response(naive_prompt, system_prompt=system_prompt)
 
         print(f"Generated category reasoning: {category_utterance}")
 
@@ -67,17 +68,20 @@ def naive_connections_solver(game: Connections, include_category=True, shot_type
     return metrics
 
 # TODO: Need to implement 
-def get_naive_response(prompt: str) -> str:
+def get_naive_response(prompt: str, system_prompt: str) -> str:
     """
     Simulated response from the CoT model for the provided prompt. This is useful for testing.
     """
-    print(f"Prompt sent to model:\n{prompt}\n")
-
-    # Simulated model response
-    if "category" in prompt:
-        return "CRICKET, FROG, HARE, KANGAROO belong to the category of 'JUMPING ANIMALS.' These are all edible, natural products."
+    if not endpoint_set:
+        # Simulated model response
+        if "category" in prompt:
+            return "CRICKET, FROG, HARE, KANGAROO belong to the category of 'JUMPING ANIMALS.' These are all edible, natural products."
+        else:
+            return "CRICKET, FROG, HARE, KANGAROO all share a common characteristic: they are types of JUMPING ANIMALS."
     else:
-        return "CRICKET, FROG, HARE, KANGAROO all share a common characteristic: they are types of JUMPING ANIMALS."
+        print(f"Prompt sent to model:\n{prompt}\n")
+        return endpoint.respond(message=prompt, system_prompt=system_prompt)
+
 
 
 def generate_naive_prompt(words: list[str], include_category=True, shot_type="zero-shot", category=None) -> str:
@@ -155,4 +159,8 @@ def script_entrypoint():
 
 
 if __name__ == "__main__":
+    endpoint_set = False
+    if not True:
+        endpoint = Endpoint("groq", "gpt3.5", "api_key")
+        endpoint_set = True
     script_entrypoint()

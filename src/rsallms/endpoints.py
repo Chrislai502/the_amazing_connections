@@ -31,6 +31,11 @@ class Endpoint:
 
     CHAT_COMPLETION = "v1/chat/completions"
 
+    def __init__(self, base_url, model, api_key) -> None:
+        self.base_url = base_url
+        self.model = model
+        self.api_key = api_key
+
     def __post_init__(self):
         # resolve commonly used endpoints
         if self.base_url in Endpoint.DEFAULT_URLS:
