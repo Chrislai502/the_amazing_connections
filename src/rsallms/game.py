@@ -92,6 +92,8 @@ class Connections:
 
         :param categories: a list of Category objects
         :param group_size: the size of each group (default: 4)
+        :param max_strikes: the maximum number of strikes to allow (default: 9999)
+        :param starting_strikes: the strikes to start with (for resuming games) (default: 0)
 
         :raises ValueError: if not all groups have the size specified
         by group_size
@@ -157,22 +159,34 @@ class Connections:
         self.current_strikes = 0
 
 
+def load_games() -> list[Connections]:
+    """Load all games from the remote endpoint."""
+    resp = requests.get(GAME_DATA_ENDPOINT)
+    if resp.status_code != 200:
+        raise Exception(f"Failed to get connections data: {resp.status_code}")
+
+    raw_data = resp.json()
+
+    if not isinstance(raw_data, list):
+        raise ValueError(f"Games data is not a list of games!")
+
+    return [
+        Connections(categories=[
+            Category(**cat)
+            for cat in game["answers"]
+        ]) for game in raw_data
+    ]
+
+
 def sample_game() -> Connections:
     """
     Returns a Connections object randomly sampled from historical game data.
     """
-    resp = requests.get(GAME_DATA_ENDPOINT)
-    if resp.status_code != 200:
-        raise Exception(f"Failed to get connections data: {resp.status_code}")
-    games = resp.json()
+    games: list[Connections] = load_games()
 
     sampled_game = random.sample(games, 1)[0]
 
-    categories = [
-        Category(**category) for category in sampled_game["answers"]
-    ]
-
-    return Connections(categories)
+    return sampled_game
 
 
 def mixed_game() -> Connections:
@@ -181,16 +195,11 @@ def mixed_game() -> Connections:
 
     Note: The resulting game may or may not have been a historical game.
     """
-    resp = requests.get(GAME_DATA_ENDPOINT)
-    if resp.status_code != 200:
-        raise Exception(f"Failed to get connections data: {resp.status_code}")
-    games = resp.json()
+    games: list[Connections] = load_games()
 
-    categories = []
+    categories: list[Category] = []
     for game in games:
-        categories.extend(game["answers"])
-
-    categories = [Category(**category) for category in categories]
+        categories.extend(game.categories)
 
     sampled_categories = random.sample(categories, 4)
 
@@ -212,25 +221,6 @@ def load_daily_board() -> Connections:
         Category(level=3, group="PALINDROMES", members=[
                  "KAYAK", "LEVEL", "MOM", "RACECAR"])
     ])
-
-
-def load_games() -> list[Connections]:
-    """Load all games from the remote endpoint."""
-    resp = requests.get(GAME_DATA_ENDPOINT)
-    if resp.status_code != 200:
-        raise Exception(f"Failed to get connections data: {resp.status_code}")
-
-    raw_data = resp.json()
-
-    if not isinstance(raw_data, list):
-        raise ValueError(f"Games data is not a list of games!")
-
-    return [
-        Connections(categories=[
-            Category(**cat)
-            for cat in game["answers"]
-        ]) for game in raw_data
-    ]
 
 
 def save_specific_game_indices_to_json(indices: list[int], filename='connections.json') -> None:
