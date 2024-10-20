@@ -1,6 +1,7 @@
 
 import importlib.resources
 
+from typing import TypeAlias, Callable
 from dataclasses import dataclass
 from typing import Callable
 from os import environ as env
@@ -14,7 +15,11 @@ try:
 except:
     print(f"Could not load environment variables. Continuing without them ...")
 
+from .metrics import Metrics
+
 PROMPTS_FOLDER = importlib.resources.files("rsallms").joinpath("prompts")
+EndpointFactory: TypeAlias = Callable[[Metrics], "Endpoint"]
+EndpointConfig: TypeAlias = dict[str, EndpointFactory]
 
 
 @dataclass
@@ -39,8 +44,20 @@ class Endpoint:
     }
 
     base_url: str
+    """
+    The base URL for the api. Can also be a key in `Endpoint.DEFAULTS`
+    as shorthand for a url and to override the `api_key`. This shorthand
+    should not be used in conjunction with `api_key`.
+    """
+
     model: str
+    """The name of the model provided by the endpoint"""
+
     api_key: str | None = None
+    """[Optional] The API key required to establish a connection"""
+
+    metrics: Metrics | None = None
+    """[Optional] The metrics instance to log token usage to"""
 
     CHAT_COMPLETION = "v1/chat/completions"
 
@@ -82,10 +99,17 @@ class Endpoint:
             raise e
 
         if 'error' in json_response:
-            raise ValueError(f"Error in endpoint request!: {json_response['error']}")
+            raise ValueError(
+                f"Error in endpoint request!: {json_response['error']}")
         if 'choices' not in json_response:
-            raise ValueError(f"Malformed response from endpoint!: Got: {json_response}")
+            raise ValueError(
+                f"Malformed response from endpoint!: Got: {json_response}")
 
+        if self.metrics is not None:
+            self.metrics.add_tokens(
+                self.model,
+                json_response['usage']['total_tokens']
+            )
         return json_response['choices'][0]['message']['content']
 
 
