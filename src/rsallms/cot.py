@@ -56,7 +56,6 @@ def cot_connections_solver(game: Connections, include_category=True, shot_type="
             print(f"Correct: {', '.join(curr_group.members)}")
             level += 1
 
-    metrics.finalize_points()
     return metrics
 
 

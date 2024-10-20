@@ -28,10 +28,11 @@ class Metrics:
         """Calculate the solve rate as a percentage."""
         return (sum(self.solves) / self.total_levels) * 100
 
-    def finalize_points(self):
+    @property
+    def final_points(self) -> float:
         """Adjust the total points based on penalties."""
-        self.points -= self.failed_guesses * self.penalty_per_failed_guess
-        self.points = max(self.points, 0)  # Ensure points are not negative
+        f_points = self.points - self.failed_guesses * self.penalty_per_failed_guess
+        return max(f_points, 0)  # Ensure points are not negative
 
     def to_dict(self) -> dict:
         """Convert the metrics data to a dictionary."""
