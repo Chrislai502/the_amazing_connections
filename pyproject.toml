@@ -13,7 +13,9 @@ description = "A Python library for solving Connections games using the Rational
 dependencies = [
     "chevron",
     "requests",
-    "python-dotenv"
+    "python-dotenv",
+    "sentence_transformers",
+    "numpy",
 ]
 authors = [
     { name = "Nelson Lojo", email = "nelson.lojo@berkeley.edu"},
