@@ -1,3 +1,4 @@
+from ..metrics import Metrics
 from ..game import Connections
 
 
@@ -5,6 +6,7 @@ class Solver:
 
     def __init__(self):
         super().__init__()
+        self.metrics = Metrics()
         if type(self) == Solver:
             raise TypeError("A Solver cannot be instantiated directly!"
                             "Instantiate a subclass instead.")
@@ -35,8 +37,14 @@ class Solver:
                 previous_guesses
             )
 
-            corresponding_category = game.guess(list(guess))
-            if corresponding_category is None:  # i.e. the guess was wrong
-                previous_guesses.add(guess)
+            cat = game.guess(list(guess))
 
+            wrong_guess = cat is None
+            if wrong_guess:
+                previous_guesses.add(guess)
+                self.metrics.increment_failed_guesses()
+            else:
+                guessed_cat_idx = game._og_groups.index(cat)
+                # TODO: fix the naming below (this'll probably be super hairy to do)
+                self.metrics.add_solve(level=guessed_cat_idx)
         return game.solved_categories
