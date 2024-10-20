@@ -14,6 +14,7 @@ class Solver:
     def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
         """
         Guess a set of words that make up a Category in a game of Connections.
+        Should instantiate endpoints with the instance attribute `self.metrics`.
 
         :param word_bank: All of the words remaining in a game of Connections
         :param group_size: The number of words to guess as a group

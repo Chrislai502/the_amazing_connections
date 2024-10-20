@@ -108,7 +108,8 @@ class Endpoint:
         if self.metrics is not None:
             self.metrics.add_tokens(
                 self.model,
-                json_response['usage']['total_tokens']
+                prompt_tokens=json_response['usage']['prompt_tokens'],
+                completion_tokens=json_response['usage']['completion_tokens']
             )
         return json_response['choices'][0]['message']['content']
 
