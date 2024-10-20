@@ -5,8 +5,13 @@ from ..endpoints import Endpoint, get_prompt, EndpointConfig
 from .solver import Solver, extract_words
 
 ENDPOINTS: EndpointConfig = {
-    # this is 4 cents per Mil. tok, i.e. free
-    "default": lambda metrics: Endpoint("groq", model="llama-3.2-1b-preview", metrics=metrics)
+    "default": lambda metrics: Endpoint(
+        "groq",
+        # model="llama-3.2-1b-preview",  # this is 4 cents per Mil. tok, i.e. free
+        # model="llama-3.2-3b-preview",
+        model="llama-3.2-90b-vision-preview",
+        metrics=metrics
+    )
 }
 
 
