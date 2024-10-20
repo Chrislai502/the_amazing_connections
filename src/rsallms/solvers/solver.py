@@ -39,6 +39,7 @@ class Solver:
             )
 
             cat = game.guess(list(guess))
+            print(f"Guessed: {guess} --> {cat}")
 
             wrong_guess = cat is None
             if wrong_guess:
@@ -49,3 +50,10 @@ class Solver:
                 # TODO: fix the naming below (this'll probably be super hairy to do)
                 self.metrics.add_solve(level=guessed_cat_idx)
         return game.solved_categories
+
+
+def extract_words(response: str, word_bank: list[str]) -> list[str]:
+    return [
+        word for word in word_bank
+        if word in response
+    ]
