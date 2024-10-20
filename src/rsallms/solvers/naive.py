@@ -23,7 +23,6 @@ class NaiveSolver(Solver):
         response = ENDPOINTS["default"](self.metrics).respond(prompt)
 
         print(f'Got naive response: "{response}"')
-        guess = extract_words(response, word_bank)
-        if len(guess) != group_size:
-            raise ValueError(f"Got improper guess!: {guess}")
+        guess = extract_words(response, word_bank, group_size)
+
         return tuple(guess)

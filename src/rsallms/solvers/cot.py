@@ -52,7 +52,6 @@ class CoTSolver(Solver):
         print(f"Generated category reasoning: {reasoning}")
 
         # CoT Guessing: Extract guessed words from CoT response
-        guess = extract_words(reasoning, word_bank)
-        if len(guess) != group_size:
-            raise ValueError(f"Got improper guess!: {guess}")
+        guess = extract_words(reasoning, word_bank, group_size)
+
         return tuple(guess)

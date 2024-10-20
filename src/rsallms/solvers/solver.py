@@ -52,8 +52,13 @@ class Solver:
         return game.solved_categories
 
 
-def extract_words(response: str, word_bank: list[str]) -> list[str]:
-    return [
+def extract_words(response: str, word_bank: list[str], group_size: int) -> list[str]:
+    guess = [
         word for word in word_bank
         if word in response
     ]
+
+    if len(guess) != group_size:
+        raise ValueError(f"Got improper guess!: {guess}")
+
+    return guess
