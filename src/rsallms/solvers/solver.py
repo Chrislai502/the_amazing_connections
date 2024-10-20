@@ -55,7 +55,7 @@ class Solver:
 def extract_words(response: str, word_bank: list[str], group_size: int) -> list[str]:
     guess = [
         word for word in word_bank
-        if word in response
+        if word.upper() in response.upper()
     ]
 
     if len(guess) != group_size:
