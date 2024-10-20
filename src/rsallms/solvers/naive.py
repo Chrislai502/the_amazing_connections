@@ -20,12 +20,15 @@ class NaiveSolver(Solver):
     def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
 
         data = {
-            "words": ", ".join(word_bank)
+            "words": ", ".join(word_bank),
+            "num_words": len(word_bank),
+
         }
-        prompt = get_prompt("naive_without_category", **data)
+        system_prompt = get_prompt("system")
+        prompt = get_prompt("zero_shot_without_category", **data)
 
         # TODO: replace the bottom two with a json structured response
-        response = ENDPOINTS["default"](self.metrics).respond(prompt)
+        response = ENDPOINTS["default"](self.metrics).respond(message=prompt, system_prompt=system_prompt)
 
         print(f'Got naive response: "{response}"')
         guess = extract_words(response, word_bank, group_size)
