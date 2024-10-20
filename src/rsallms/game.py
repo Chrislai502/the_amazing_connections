@@ -119,7 +119,7 @@ class Connections:
             "starting_strikes": self.current_strikes
         }
 
-    def guess(self, words: list[str]) -> Category | None:
+    def category_guess_check(self, words: list[str]) -> Category | None:
         """
         Return the category associated with the guessed words if they match a category
         (and removes that category from the game), otherwise return None and add a strike

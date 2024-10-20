@@ -42,7 +42,7 @@ def cot_connections_solver(game: Connections, include_category=True, shot_type="
 
         # Check if the guessed set matches the target
         try:
-            actual_category = game.guess(guess)
+            actual_category = game.category_guess_check(guess)
         except GameOverException as e:
             raise e
 

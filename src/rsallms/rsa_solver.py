@@ -42,7 +42,7 @@ def rsa_connections_solver(game: Connections) -> list[bool]:
         # Check if any of the guessed sets match the target
         for guess in guesses:
             try:
-                actual_category = game.guess(guess.members)
+                actual_category = game.category_guess_check(guess.members)
             except GameOverException as e:
                 raise e
 

@@ -49,7 +49,7 @@ def naive_connections_solver(game: Connections, include_category=True, shot_type
         guess = extract_words_from_response(category_utterance) # set of 4 words guessed
         # Check if the guessed set matches the target
         try:
-            actual_category = game.guess(guess)
+            actual_category = game.category_guess_check(guess)
         except GameOverException as e:
             raise e
         if actual_category is not None:
