@@ -3,16 +3,16 @@ from heapq import heappush, heappop
 from collections.abc import Generator
 
 from ..game import Category
-from ..endpoints import get_prompt, Endpoint
+from ..endpoints import get_prompt, Endpoint, EndpointConfig
 
 from .solver import Solver
 
 # Define model configurations
-ENDPOINTS = {
-    "speaker": Endpoint("http://localhost:11434", model="llama3.2"),
-    "pragmatic_listener": Endpoint("http://localhost:11434", model="llama3.2"),
+ENDPOINTS: EndpointConfig = {
+    "speaker": lambda metrics: Endpoint("http://localhost:11434", model="llama3.2", metrics=metrics),
+    "pragmatic_listener": lambda metrics: Endpoint("http://localhost:11434", model="llama3.2", metrics=metrics),
     # this is a bit simpler version compared to the rest
-    "literal_listener": Endpoint("http://localhost:11434", model="phi3.5"),
+    "literal_listener": lambda metrics: Endpoint("http://localhost:11434", model="phi3.5", metrics=metrics),
 }
 
 
@@ -142,8 +142,7 @@ class RSASolver(Solver):
                 )
             ]
 
-    @staticmethod
-    def _evaluate_group(word_bank: list[str], proposed_group: list[str]) -> int:
+    def _evaluate_group(self, word_bank: list[str], proposed_group: list[str]) -> int:
         """
         Evaluate the quality of a given category for describing a set of target
         words by computing the number of target words that are also guessed by
@@ -156,9 +155,19 @@ class RSASolver(Solver):
         :return: the number of target words that are missed by a pragmatic listener
         """
         # TODO: we could try later on with multiple categories or multiple group guesses
-        l0 = LiteralListener(word_bank, ENDPOINTS["literal_listener"])
-        s1 = PragmaticSpeaker(word_bank, ENDPOINTS["speaker"], listener=l0)
-        l1 = PragmaticListener(word_bank, ENDPOINTS["pragmatic_listener"])
+        l0 = LiteralListener(
+            word_bank,
+            ENDPOINTS["literal_listener"](self.metrics)
+        )
+        s1 = PragmaticSpeaker(
+            word_bank,
+            ENDPOINTS["speaker"](self.metrics),
+            listener=l0
+        )
+        l1 = PragmaticListener(
+            word_bank,
+            ENDPOINTS["pragmatic_listener"](self.metrics)
+        )
 
         # Pragmatic Speaker (S1)
         category_utterances: list[str] = s1.choose_categories(
@@ -184,7 +193,7 @@ class RSASolver(Solver):
 
         error_heap: list[tuple[int, list[str]]] = []
         for proposed_group in RSASolver._generate_groups(word_bank, group_size):
-            group_cost = RSASolver._evaluate_group(word_bank, proposed_group)
+            group_cost = self._evaluate_group(word_bank, proposed_group)
             heappush(error_heap, (group_cost, proposed_group))
 
         most_correct_guess = heappop(error_heap)

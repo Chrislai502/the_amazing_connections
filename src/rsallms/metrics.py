@@ -11,6 +11,7 @@ class Metrics:
     failed_guesses: int = 0
     solve_order: List[int] = field(default_factory=list)
     points: int = 0
+    tokens_used: dict[str, int] = field(default_factory=dict)
 
     def increment_failed_guesses(self):
         """Increment the count of failed guesses."""
@@ -22,6 +23,10 @@ class Metrics:
             self.solves[level] = True
             self.solve_order.append(level)
             self.points += self.points_per_correct
+
+    def add_tokens(self, model_name: str, token_count: int):
+        self.tokens_used[model_name] = \
+            self.tokens_used.get(model_name, 0) + token_count
 
     @property
     def solve_rate(self) -> float:
@@ -41,5 +46,6 @@ class Metrics:
             'failed_guesses': self.failed_guesses,
             'solve_order': self.solve_order,
             'points': self.points,
-            'solve_rate': self.solve_rate
+            'solve_rate': self.solve_rate,
+            'tokens_used': self.tokens_used
         }

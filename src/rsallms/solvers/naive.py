@@ -1,12 +1,12 @@
 import re
 
-from ..endpoints import Endpoint, get_prompt
+from ..endpoints import Endpoint, get_prompt, EndpointConfig
 
 from .solver import Solver
 
-ENDPOINTS = {
+ENDPOINTS: EndpointConfig = {
     # this is 4 cents per Mil. tok, i.e. free
-    "default": Endpoint("groq", model="llama-3.2-1b-preview")
+    "default": lambda metrics: Endpoint("groq", model="llama-3.2-1b-preview", metrics=metrics)
 }
 
 
@@ -43,6 +43,6 @@ class NaiveSolver(Solver):
         prompt = get_prompt("naive_without_category", **data)
 
         # TODO: replace the bottom two with a json structured response
-        response = ENDPOINTS["default"].respond(prompt)
+        response = ENDPOINTS["default"](self.metrics).respond(prompt)
 
         return tuple(NaiveSolver._extract_words(response))

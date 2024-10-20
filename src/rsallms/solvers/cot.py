@@ -2,7 +2,7 @@ import re
 
 from typing import Literal
 
-from ..endpoints import Endpoint, CannedResponder, get_prompt
+from ..endpoints import EndpointConfig, CannedResponder, get_prompt
 
 from .solver import Solver
 
@@ -21,9 +21,9 @@ def canned_response(msg: str, sys_msg: str | None) -> str:
 
 
 # Define model configuration for CoT prompting
-ENDPOINTS = {
+ENDPOINTS: EndpointConfig = {
     # Adjust the model and endpoint URL as needed
-    "cot_model": CannedResponder(canned_response)
+    "default": lambda metrics: CannedResponder(canned_response)
 }
 
 
@@ -88,7 +88,7 @@ class CoTSolver(Solver):
     def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
         cot_prompt = CoTSolver._get_prompt(word_bank, "one-shot")
 
-        reasoning = ENDPOINTS['cot_model'].respond(cot_prompt)
+        reasoning = ENDPOINTS['default'](self.metrics).respond(cot_prompt)
 
         print(f"Generated category reasoning: {reasoning}")
 
