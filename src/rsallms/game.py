@@ -50,7 +50,7 @@ class Connections:
     @property
     def get_words_per_group(self) -> list[dict[str, int | str | list[str]]]:
         """
-        The categories in this game as a list of dictionaries
+        The remaining categories in this game as a list of dictionaries
         """
         return [asdict(group) for group in self.categories]
 
@@ -98,7 +98,8 @@ class Connections:
         """
         # Check that all groups have the same size
         if not all(len(group.members) == group_size for group in categories):
-            raise ValueError(f"All groups must have exactly {group_size} members")
+            raise ValueError(
+                f"All groups must have exactly {group_size} members")
 
         self._max_strikes = max_strikes
         self._og_groups = categories.copy()
@@ -147,6 +148,28 @@ class Connections:
         """
         self.categories = self._og_groups.copy()
         self.current_strikes = 0
+
+    def __str__(self) -> str:
+        """
+        Produce a table that summarizes the current game like this:
+        '''
+        Strikes: XXXX/XXXX  Solves: XXX
+        Category             |    Solved?   | Words
+        ---------------------------------------------
+        FRUITS               |    False     | APPLE, BANANA, PEAR, PINEAPPLE
+        SPORTS               |     True     | BASKETBALL, HOCKEY, ...
+        '''
+        """
+        categories_table: list[str] = [
+            f"{"Category":<20} | {"Solved?":^12} | {"Words"}",
+            "-" * (20 + 3 + 12 + 3 + len("Words") + 2)
+        ] + [
+            f"{cat.group:<20} | {cat not in self.categories:^12} | {cat.members}"
+            for cat in self._og_groups
+        ]
+        strikes_h = f"Strikes:{self.current_strikes:4d}/{self._max_strikes:4d}"
+        solves_h = f"Solves:{len(self._og_groups) - len(self.categories):2d}"
+        return f"{strikes_h:<20}{solves_h:<20}\n" + "\n".join(categories_table)
 
 
 def load_games() -> list[Connections]:
