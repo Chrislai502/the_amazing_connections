@@ -154,17 +154,21 @@ class Connections:
         Produce a table that summarizes the current game like this:
         '''
         Strikes: XXXX/XXXX  Solves: XXX
-        Category             |    Solved?   | Words
-        ---------------------------------------------
-        FRUITS               |    False     | APPLE, BANANA, PEAR, PINEAPPLE
-        SPORTS               |     True     | BASKETBALL, HOCKEY, ...
+        Category             | Solved? | Words
+        ----------------------------------------
+        FRUITS               |  False  | APPLE, BANANA, PEAR, PINEAPPLE
+        SPORTS               |  True   | BASKETBALL, HOCKEY, ...
         '''
         """
         categories_table: list[str] = [
-            f"{"Category":<20} | {"Solved?":^12} | {"Words"}",
-            "-" * (20 + 3 + 12 + 3 + len("Words") + 2)
+            f"{"Category":<20} | {"Solved?":^7} | {"Words"}",
+            "-" * (20 + 3 + 7 + 3 + len("Words") + 2)
         ] + [
-            f"{cat.group:<20} | {cat not in self.categories:^12} | {cat.members}"
+            " | ".join([
+                f"{cat.group:<20}",
+                f"{str(cat not in self.categories):^7}",
+                f"{cat.members}"
+            ])
             for cat in self._og_groups
         ]
         strikes_h = f"Strikes:{self.current_strikes:4d}/{self._max_strikes:4d}"
