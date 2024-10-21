@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
-
+from sentence_transformers import SentenceTransformer
+import numpy as np
 
 @dataclass
 class Metrics:
@@ -12,6 +13,9 @@ class Metrics:
     solve_order: List[int] = field(default_factory=list)
     points: int = 0
     tokens_used: dict[str, dict[str, int]] = field(default_factory=dict)
+    hallucinated_words: int = 0
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    category_similarity: float = 0.0
 
     def increment_failed_guesses(self):
         """Increment the count of failed guesses."""
@@ -55,5 +59,25 @@ class Metrics:
             'solve_order': self.solve_order,
             'points': self.points,
             'solve_rate': self.solve_rate,
-            'tokens_used': self.tokens_used
+            'tokens_used': self.tokens_used,
+            'num_hallucinated_words': self.hallucinated_words,
         }
+    
+    def hallucination_words(self, guess_word_lst: list[str], all_board_words: list[str]) -> float:
+        """Get the number of words that are guessed, but not on the board"""
+        board_word_set = set(all_board_words)
+
+        hallucinated_words = sum(1 for word in guess_word_lst if word not in board_word_set)
+        
+        self.hallucinated_words += hallucinated_words
+        
+        return hallucinated_words
+    
+    def consine_similarity_category(self, guessed_cat: str, correct_cat: str) -> float:
+        """Given correct guess of words, return cosine similarity of guessed cat with the ground truth connections category"""
+        embeddings = self.model.encode([guessed_cat, correct_cat])
+        embedding1, embedding2 = embeddings[0], embeddings[1]
+        similarity = np.dot(embedding1, embedding2)
+        normalized_similarity = (similarity + 1) / 2
+        self.category_similarity = (((len(self.solve_order) - 1) * self.category_similarity) + normalized_similarity) / len(self.solve_order)
+        return normalized_similarity
