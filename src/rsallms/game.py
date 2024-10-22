@@ -229,14 +229,14 @@ def load_daily_board() -> Connections:
     FOR TESTING. REMOVE ME!
     """
     return Connections([
-        Category(level=0, group="WET WEATHER", members=[
-                 "HAIL", "RAIN", "SLEET", "SNOW"]),
-        Category(level=1, group="NBA TEAMS", members=[
-                 "BUCKS", "HEAT", "JAZZ", "NETS"]),
-        Category(level=2, group="KEYBOARD KEYS", members=[
-                 "OPTION", "RETURN", "SHIFT", "TAB"]),
-        Category(level=3, group="PALINDROMES", members=[
-                 "KAYAK", "LEVEL", "MOM", "RACECAR"])
+        Category(level=0, group="JUMPING ANIMALS", members=
+                 ["CRICKET", "FROG", "HARE", "KANGAROO"]),
+        Category(level=1, group="APPLY PRESSURE TO", members=
+                 ["CRUSH", "MASH", "PRESS", "SQUASH"]),
+        Category(level=2, group="OLYMPIC SPORTS", members=[
+            "BREAKING", "HOCKEY", "SKELETON", "TRAMPOLINE"]),
+        Category(level=3, group="THINGS YOU CAN SET", members=[
+            "MOOD", "RECORD", "TABLE", "VOLLEYBALL"])
     ])
 
 
