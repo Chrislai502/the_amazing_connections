@@ -1,6 +1,16 @@
 from ..metrics import Metrics
 from ..game import Connections
+from ..endpoints import Endpoint, get_prompt, EndpointConfig
 
+
+ENDPOINTS: EndpointConfig = {
+    "default": Endpoint(
+        "groq",
+        # model="llama-3.2-1b-preview",  # this is 4 cents per Mil. tok, i.e. free
+        # model="llama-3.2-3b-preview",
+        model="llama-3.2-90b-vision-preview"
+    )
+}
 
 class Solver:
 
@@ -55,10 +65,15 @@ class Solver:
 
 
 def extract_words(response: str, word_bank: list[str], group_size: int) -> list[str]:
+    prompt_message = f"Given this chat response: {response}, I would like to get the 4 words from the best guess that it has made. Only provide one line of response in this specific format: \"word1 word2 word3 word4\". Nothing else. "
+    updated_response = ENDPOINTS["default"].respond(message=prompt_message, temperature=0.1)
+                                                    # I would like for you to do the work. Don't provide any code for me to run. Instead just provide me 4 values.")
+    print('Connections Guess of 4 words: ', updated_response)
     guess = [
         word for word in word_bank
-        if word.upper() in response.upper()
+        if word.upper() in updated_response.upper()
     ]
+
 
     if len(guess) != group_size:
         raise ValueError(f"Got improper guess!: {guess}")
