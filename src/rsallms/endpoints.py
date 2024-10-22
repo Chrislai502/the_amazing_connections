@@ -76,11 +76,12 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_prompt: str | None = None) -> str:
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None) -> str:
         headers = {"Content-Type": "application/json"}
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
-
+        if temperature is None:
+            temperature = 0.1
         messages = [{"role": "user", "content": message}]
         if system_prompt is not None:
             messages.insert(0, {"role": "system", "content": system_prompt})
@@ -88,7 +89,8 @@ class Endpoint:
         data = {
             "model": self.model,
             "messages": messages,
-            "stream": False
+            "stream": False,
+            "temperature": temperature 
         }
         response = requests.post(self.chat_url, headers=headers, json=data)
 
