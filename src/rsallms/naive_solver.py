@@ -67,19 +67,19 @@ def naive_connections_solver(game: Connections, include_category=True, shot_type
     return metrics
 
 # TODO: Need to implement 
-def get_naive_response(prompt: str, system_prompt: str) -> str:
-    """
-    Simulated response from the CoT model for the provided prompt. This is useful for testing.
-    """
-    if not endpoint_set:
-        # Simulated model response
-        if "category" in prompt:
-            return "CRICKET, FROG, HARE, KANGAROO belong to the category of 'JUMPING ANIMALS.' These are all edible, natural products."
-        else:
-            return "CRICKET, FROG, HARE, KANGAROO all share a common characteristic: they are types of JUMPING ANIMALS."
-    else:
-        print(f"Prompt sent to model:\n{prompt}\n")
-        return endpoint.respond(message=prompt, system_prompt=system_prompt)
+# def get_naive_response(prompt: str, system_prompt: str) -> str:
+#     """
+#     Simulated response from the CoT model for the provided prompt. This is useful for testing.
+#     """
+#     if not endpoint_set:
+#         # Simulated model response
+#         if "category" in prompt:
+#             return "CRICKET, FROG, HARE, KANGAROO belong to the category of 'JUMPING ANIMALS.' These are all edible, natural products."
+#         else:
+#             return "CRICKET, FROG, HARE, KANGAROO all share a common characteristic: they are types of JUMPING ANIMALS."
+#     else:
+#         print(f"Prompt sent to model:\n{prompt}\n")
+#         return endpoint.respond(message=prompt, system_prompt=system_prompt)
 
 
 
