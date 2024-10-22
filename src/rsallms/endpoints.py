@@ -121,7 +121,7 @@ class CannedResponder(Endpoint):
         super().__init__("", "")
         self.responder = responder_func
 
-    def respond(self, message, system_prompt=None):
+    def respond(self, message, system_prompt=None, temperature=None):
         return self.responder(message, system_prompt)
 
 

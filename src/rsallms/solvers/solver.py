@@ -60,7 +60,7 @@ class Solver:
                 guessed_cat_idx = game._og_groups.index(cat)
                 # TODO: fix the naming below (this'll probably be super hairy to do)
                 self.metrics.add_solve(level=guessed_cat_idx)
-                self.metrics.consine_similarity_category(guessed_cat=guessed_cat, correct_cat=cat)
+                self.metrics.cosine_similarity_category(guessed_cat=guessed_cat, correct_cat=cat.group)
         return game.solved_categories
 
 
