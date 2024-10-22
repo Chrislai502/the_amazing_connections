@@ -34,7 +34,42 @@ class Category:
         return len(this_set.symmetric_difference(other_set))
 
 
-class Connections:
+class Game:
+    """
+    Base class representing a general game with strikes, groups, and logic for tracking strikes and categories.
+    """
+
+    def __init__(self, max_strikes: int = 9999, starting_strikes: int = 0):
+        self._max_strikes = max_strikes
+        self.current_strikes = starting_strikes
+
+    @property
+    def is_over(self) -> bool:
+        """
+        A game is over if the max number of strikes is reached or
+        if the game is solved
+        """
+        return self.current_strikes >= self._max_strikes
+
+    def reset(self):
+        """
+        Reset the game to its initial state (strikes, etc.).
+        Subclasses should implement their own reset methods to handle their own state.
+        """
+        self.current_strikes = 0
+
+    def json(self) -> dict:
+        """
+        Returns a JSON representation of the game state.
+        Override this method in subclasses to add custom game data.
+        """
+        return {
+            "max_strikes": self._max_strikes,
+            "current_strikes": self.current_strikes,
+        }
+
+
+class Connections(Game):
     """
     A single game of Connections
     """
@@ -82,6 +117,9 @@ class Connections:
             not (cat in self.categories)
             for cat in self._og_groups
         ]
+
+    # @property
+    # def metrics(self) -> Metrics
 
     def __init__(self, categories: list[Category], group_size: int = 4, max_strikes: int = 9999, starting_strikes: int = 0):
         """

@@ -1,6 +1,7 @@
 import sqlite3
 import datetime
 
+
 class EvaluationDatabase:
     def __init__(self, db_filepath="evaluation_metrics.db"):
         """
@@ -29,46 +30,20 @@ class EvaluationDatabase:
             """)
         print("Database table created or verified.")
 
-    def get_hallucination_rate(self):
-        # Placeholder for logic to get hallucination rate
-        return None
-
-    def get_num_failed_guesses(self):
-        # Placeholder for logic to get the number of failed guesses
-        return None
-
-    def get_solve_rate(self):
-        # Placeholder for logic to get the solve rate
-        return None
-
-    def get_solve_order(self):
-        # Placeholder for logic to get the solve order (should return a list or string representation of it)
-        return None
-
-    def get_num_tokens_generated(self):
-        # Placeholder for logic to get the number of tokens generated
-        return None
-
-    def get_num_tokens_ingested(self):
-        # Placeholder for logic to get the number of tokens ingested
-        return None
-
-    def add_evaluation_entry(self):
+    def add_evaluation_entry(self, hallucination_rate: float, num_failed_guesses: int, solve_rate: float, solve_order: list[int], num_tokens_generated: int, num_tokens_ingested: int):
         """
         Collects metrics and adds a row entry to the database.
+
+        :param hallucination_rate: Number of hallucinated words.
+        :param num_failed_guesses: Number of failed guesses.
+        :param solve_rate: Solve rate percentage.
+        :param solve_order: The order in which levels were solved.
+        :param num_tokens_generated: Total tokens generated during the game.
+        :param num_tokens_ingested: Total tokens ingested during the game.
         """
-        # Get the current date and time as a timestamp
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        solve_order_str = str(solve_order)
 
-        # Collect all metric values (currently placeholders)
-        hallucination_rate = self.get_hallucination_rate()
-        num_failed_guesses = self.get_num_failed_guesses()
-        solve_rate = self.get_solve_rate()
-        solve_order = str(self.get_solve_order())  # Assuming a list, convert to string for storage
-        num_tokens_generated = self.get_num_tokens_generated()
-        num_tokens_ingested = self.get_num_tokens_ingested()
-
-        # Insert the collected data into the database
         with self.conn:
             self.conn.execute("""
                 INSERT INTO evaluations (
@@ -77,7 +52,7 @@ class EvaluationDatabase:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (
                 timestamp, hallucination_rate, num_failed_guesses, solve_rate,
-                solve_order, num_tokens_generated, num_tokens_ingested
+                solve_order_str, num_tokens_generated, num_tokens_ingested
             ))
         print(f"Entry added at {timestamp}.")
 
@@ -86,15 +61,3 @@ class EvaluationDatabase:
         Closes the database connection.
         """
         self.conn.close()
-
-
-# Example Usage:
-if __name__ == "__main__":
-    # Initialize the database
-    db = EvaluationDatabase()
-
-    # Add a new evaluation entry (this will collect data and insert a row)
-    db.add_evaluation_entry()
-
-    # Close the database connection when done
-    db.close()
