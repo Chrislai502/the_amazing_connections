@@ -5,6 +5,7 @@ import datetime
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
+
 @dataclass
 class Metrics:
     total_levels: int = 4
@@ -64,17 +65,17 @@ class Metrics:
             'tokens_used': self.tokens_used,
             'num_hallucinated_words': self.hallucinated_words,
         }
-    
+
     def hallucination_words(self, guess_word_lst: list[str], all_board_words: list[str]) -> float:
         """Get the number of words that are guessed, but not on the board"""
         board_word_set = set(all_board_words)
 
         hallucinated_words = sum(1 for word in guess_word_lst if word not in board_word_set)
-        
+
         self.hallucinated_words += hallucinated_words
-        
+
         return hallucinated_words
-    
+
     def cosine_similarity_category(self, guessed_cat: str, correct_cat: str) -> float:
         """Given correct guess of words, return cosine similarity of guessed cat with the ground truth connections category"""
         embeddings = self.model.encode([guessed_cat, correct_cat])
@@ -84,12 +85,12 @@ class Metrics:
         self.category_similarity = (((len(self.solve_order) - 1) * self.category_similarity) + normalized_similarity) / len(self.solve_order)
         return normalized_similarity
 
-    def commit(self, to_db_file="evaluations.db"):
-        conn = sqlite3.connect(to_db_file)
+    def commit(self, to_db="evaluations.db"):
+        conn = sqlite3.connect(to_db)
 
         # Make sure the table exists
-        with conn.cursor() as cur:
-            cur.execute("""
+        with conn:
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS evaluations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp TEXT,
@@ -103,25 +104,22 @@ class Metrics:
             """)
 
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        data = self.to_dict()
-
-        solve_order_str = str(solve_order)
 
         # Insert row
-        with conn.cursor() as cur:
-            cur.execute("""
+        with conn:
+            conn.execute("""
                 INSERT INTO evaluations (
                     timestamp, hallucination_rate, num_failed_guesses, solve_rate, 
                     solve_order, num_tokens_generated, num_tokens_ingested
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, tuple([ timestamp ] + [
-                data[data_point] for data_point in 
-                    [ "hallucination_rate",
-                      "num_failed_guesses",
-                      "solve_rate",
-                      "solve_order_str",
-                      "num_tokens_generated",
-                      "num_tokens_ingested"   ]
-            ]))
+            """, (
+                timestamp,
+                self.hallucinated_words,
+                self.failed_guesses,
+                self.solve_rate,
+                str(self.solve_order),
+                sum(t['completion_tokens'] for t in self.tokens_used.values()),
+                sum(t['prompt_tokens'] for t in self.tokens_used.values())
+            ))
 
         conn.close()
