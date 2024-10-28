@@ -187,12 +187,17 @@ def load_games() -> list[Connections]:
     if not isinstance(raw_data, list):
         raise ValueError(f"Games data is not a list of games!")
 
-    return [
-        Connections(categories=[
+    all_game_boards = []
+    for game in raw_data:
+        categories=[
             Category(**cat)
             for cat in game["answers"]
-        ]) for game in raw_data
-    ]
+        ]
+        sorted(categories, key=lambda cat: cat.level, reverse=False)
+        all_game_boards.append(Connections(categories=categories))
+
+
+    return all_game_boards
 
 
 def sample_game() -> Connections:
