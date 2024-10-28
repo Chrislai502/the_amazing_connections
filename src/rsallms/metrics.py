@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
+import sqlite3
+import datetime
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
@@ -81,3 +83,45 @@ class Metrics:
         normalized_similarity = (similarity + 1) / 2
         self.category_similarity = (((len(self.solve_order) - 1) * self.category_similarity) + normalized_similarity) / len(self.solve_order)
         return normalized_similarity
+
+    def commit(self, to_db_file="evaluations.db"):
+        conn = sqlite3.connect(to_db_file)
+
+        # Make sure the table exists
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS evaluations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT,
+                    hallucination_rate REAL,
+                    num_failed_guesses INTEGER,
+                    solve_rate REAL,
+                    solve_order TEXT,
+                    num_tokens_generated INTEGER,
+                    num_tokens_ingested INTEGER
+                )
+            """)
+
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data = self.to_dict()
+
+        solve_order_str = str(solve_order)
+
+        # Insert row
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO evaluations (
+                    timestamp, hallucination_rate, num_failed_guesses, solve_rate, 
+                    solve_order, num_tokens_generated, num_tokens_ingested
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, tuple([ timestamp ] + [
+                data[data_point] for data_point in 
+                    [ "hallucination_rate",
+                      "num_failed_guesses",
+                      "solve_rate",
+                      "solve_order_str",
+                      "num_tokens_generated",
+                      "num_tokens_ingested"   ]
+            ]))
+
+        conn.close()

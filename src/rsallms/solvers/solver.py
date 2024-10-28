@@ -16,12 +16,11 @@ class Solver:
 
     def __init__(self):
         super().__init__()
-        self.metrics = Metrics()
         if type(self) == Solver:
             raise TypeError("A Solver cannot be instantiated directly!"
                             "Instantiate a subclass instead.")
 
-    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], metrics: Metrics, group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
         """
         Guess a set of words that make up a Category in a game of Connections.
         Should instantiate endpoints with the instance attribute `self.metrics`.
@@ -40,12 +39,14 @@ class Solver:
         :param game: The game to play
         :return: a list of flags indicating which categories were solved
         """
+        metrics = Metrics()
         previous_guesses: set[tuple[str, ...]] = set()
         while not game.is_over:
             guess = self.guess(
                 game.all_words,
+                metrics,
                 game.group_size,
-                previous_guesses
+                previous_guesses,
             )
             guessed_cat = "placeholder" # have to figure out how to do this
             cat = game.category_guess_check(list(guess))
@@ -61,6 +62,8 @@ class Solver:
                 # TODO: fix the naming below (this'll probably be super hairy to do)
                 self.metrics.add_solve(level=guessed_cat_idx)
                 self.metrics.cosine_similarity_category(guessed_cat=guessed_cat, correct_cat=cat.group)
+
+        self.metrics.commit()
         return game.solved_categories
 
 
