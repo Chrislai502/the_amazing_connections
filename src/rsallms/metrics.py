@@ -75,7 +75,7 @@ class Metrics:
         self.hallucinated_words += hallucinated_words
         
         return hallucinated_words
-
+    
     def cosine_similarity_category(self, guessed_cat: str, correct_cat: str) -> float:
         """Given correct guess of words, return cosine similarity of guessed cat with the ground truth connections category"""
         embeddings = self.model.encode([guessed_cat, correct_cat])
