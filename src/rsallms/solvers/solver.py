@@ -1,6 +1,6 @@
 from ..metrics import Metrics
 from ..game import Connections
-from ..endpoints import Endpoint, get_prompt, EndpointConfig
+from ..endpoints import Endpoint, EndpointConfig
 
 
 ENDPOINTS: EndpointConfig = {
@@ -55,15 +55,15 @@ class Solver:
             wrong_guess = cat is None
             if wrong_guess:
                 previous_guesses.add(guess)
-                self.metrics.hallucination_words(list(guess), game.all_words)
-                self.metrics.increment_failed_guesses()
+                metrics.hallucination_words(list(guess), game.all_words)
+                metrics.increment_failed_guesses()
             else:
                 guessed_cat_idx = game._og_groups.index(cat)
                 # TODO: fix the naming below (this'll probably be super hairy to do)
-                self.metrics.add_solve(level=guessed_cat_idx)
-                self.metrics.cosine_similarity_category(guessed_cat=guessed_cat, correct_cat=cat.group)
+                metrics.add_solve(level=guessed_cat_idx)
+                metrics.cosine_similarity_category(guessed_cat=guessed_cat, correct_cat=cat.group)
 
-        self.metrics.commit()
+        metrics.commit()
         return game.solved_categories
 
 
