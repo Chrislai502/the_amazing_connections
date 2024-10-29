@@ -41,11 +41,13 @@ class Connections:
 
     @property
     def all_words(self) -> list[str]:
-        return [
+        word_list: list[str] = [
             word
             for group in self.categories
             for word in group.members
         ]
+        random.shuffle(word_list)
+        return word_list
 
     @property
     def get_words_per_group(self) -> list[dict[str, int | str | list[str]]]:
@@ -187,17 +189,12 @@ def load_games() -> list[Connections]:
     if not isinstance(raw_data, list):
         raise ValueError(f"Games data is not a list of games!")
 
-    all_game_boards = []
-    for game in raw_data:
-        categories=[
+    return [
+        Connections(categories=[
             Category(**cat)
             for cat in game["answers"]
-        ]
-        sorted(categories, key=lambda cat: cat.level, reverse=False)
-        all_game_boards.append(Connections(categories=categories))
-
-
-    return all_game_boards
+        ]) for game in raw_data
+    ]
 
 
 def sample_game() -> Connections:
