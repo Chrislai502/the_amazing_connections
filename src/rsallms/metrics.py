@@ -71,9 +71,9 @@ class Metrics:
         board_word_set = set(all_board_words)
 
         hallucinated_words = sum(1 for word in guess_word_lst if word not in board_word_set)
-
+        
         self.hallucinated_words += hallucinated_words
-
+        
         return hallucinated_words
 
     def cosine_similarity_category(self, guessed_cat: str, correct_cat: str) -> float:
