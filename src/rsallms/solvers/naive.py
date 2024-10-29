@@ -9,14 +9,15 @@ ENDPOINTS: EndpointConfig = {
         "groq",
         # model="llama-3.2-1b-preview",  # this is 4 cents per Mil. tok, i.e. free
         # model="llama-3.2-3b-preview",
-        model="llama-3.2-90b-vision-preview",
+        # model="llama-3.2-90b-vision-preview",
+        model="llama-3.1-70b-versatile"
     )
 }
 
 
 class NaiveSolver(Solver):
 
-    def guess(self, word_bank: list[str], metrics: Metrics, group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
 
         data = {
             "words": ", ".join(word_bank),

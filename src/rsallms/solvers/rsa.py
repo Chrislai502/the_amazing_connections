@@ -193,7 +193,7 @@ class RSASolver(Solver):
 
         return min(mismatches)
 
-    def guess(self, word_bank: list[str], metrics: Metrics, group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
 
         error_heap: list[tuple[int, list[str]]] = []
         for proposed_group in RSASolver._generate_groups(word_bank, group_size):

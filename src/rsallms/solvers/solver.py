@@ -20,7 +20,7 @@ class Solver:
             raise TypeError("A Solver cannot be instantiated directly!"
                             "Instantiate a subclass instead.")
 
-    def guess(self, word_bank: list[str], metrics: Metrics, group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
         """
         Guess a set of words that make up a Category in a game of Connections.
         Should instantiate endpoints with the instance attribute `self.metrics`.
@@ -32,7 +32,7 @@ class Solver:
         """
         raise NotImplementedError
 
-    def play(self, game: Connections) -> list[bool]:
+    def play(self, game: Connections, commit_to: str | None = None) -> list[bool]:
         """
         Play a game of Connections.
 
@@ -43,10 +43,10 @@ class Solver:
         previous_guesses: set[tuple[str, ...]] = set()
         while not game.is_over:
             guess = self.guess(
-                game.all_words,
-                metrics,
-                game.group_size,
-                previous_guesses,
+                word_bank=game.all_words,
+                group_size=game.group_size,
+                previous_guesses=previous_guesses,
+                metrics=metrics,
             )
             guessed_cat = "placeholder" # have to figure out how to do this
             cat = game.category_guess_check(list(guess))
@@ -63,7 +63,8 @@ class Solver:
                 metrics.add_solve(level=guessed_cat_idx)
                 metrics.cosine_similarity_category(guessed_cat=guessed_cat, correct_cat=cat.group)
 
-        metrics.commit()
+        if commit_to is not None:
+            metrics.commit(to_db=commit_to)
         return game.solved_categories
 
 
