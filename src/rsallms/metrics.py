@@ -65,7 +65,7 @@ class Metrics:
             'tokens_used': self.tokens_used,
             'num_hallucinated_words': self.hallucinated_words,
         }
-
+    
     def hallucination_words(self, guess_word_lst: list[str], all_board_words: list[str]) -> float:
         """Get the number of words that are guessed, but not on the board"""
         board_word_set = set(all_board_words)
