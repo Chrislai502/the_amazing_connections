@@ -130,6 +130,58 @@ def get_prompt(name: str, **kwargs) -> str:
         return chevron.render(f.read(), data=kwargs).strip()
 
 
+def generate_prompt(all_words: list[str], category: str | None, num_shots: int):
+    examples = prepare_examples(num_shots, include_category=category is not None)
+    prompt = get_prompt(
+        'multi_shot_prompt',
+        instructions={'num_words': len(all_words)},
+        examples=examples,
+        current_words=', '.join(all_words),
+        current_category=category  # This can be None
+    )
+    return prompt
+
+def prepare_examples(num_shots: int, include_category: bool = True) -> list[dict]:
+    """
+    Prepare a list of examples for multi-shot prompting.
+
+    :param num_shots: Number of examples to include.
+    :param include_category: Whether to include categories in the examples.
+    :return: A list of example dictionaries.
+    """
+    all_examples = [
+        {
+            'words': 'Bass, Flounder, Salmon, Trout, Ant, Drill, Island, Opal',
+            'category': 'types of fish' if include_category else None,
+            'response': '{"groups": [{"reason": "types of fish", "words": ["Bass", "Flounder", "Salmon", "Trout"]}]}'
+        },
+        {
+            'words': 'Ant, Drill, Island, Opal, Bass, Flounder, Salmon, Trout',
+            'category': 'things that start with FIRE' if include_category else None,
+            'response': '{"groups": [{"reason": "things that start with FIRE", "words": ["Ant", "Drill", "Island", "Opal"]}]}'
+        },
+        {
+            'words': 'ALLEY, DRIVE, LANE, STREET, BLISS, CLOUD NINE, HEAVEN, PARADISE',
+            'category': 'ROAD NAMES' if include_category else None,
+            'response': '{"groups": [{"reason": "ROAD NAMES", "words": ["ALLEY", "DRIVE", "LANE", "STREET"]}]}'
+        },
+        {
+            'words': 'BLISS, CLOUD NINE, HEAVEN, PARADISE, ALLEY, DRIVE, LANE, STREET',
+            'category': 'STATES OF ELATION' if include_category else None,
+            'response': '{"groups": [{"reason": "STATES OF ELATION", "words": ["BLISS", "CLOUD NINE", "HEAVEN", "PARADISE"]}]}'
+        },
+        {
+            'words': 'CIRCUS, SATURN, TREE, WEDDING, BLISS, CLOUD NINE, HEAVEN, PARADISE',
+            'category': 'THINGS WITH RINGS' if include_category else None,
+            'response': '{"groups": [{"reason": "THINGS WITH RINGS", "words": ["CIRCUS", "SATURN", "TREE", "WEDDING"]}]}'
+        },
+    ]
+    examples = all_examples[:num_shots]
+
+    return examples
+
+
+
 def chain_prompts(files: list[str], **kwargs) -> str:
     content = []
     for file in files:
