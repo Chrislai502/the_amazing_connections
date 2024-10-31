@@ -2,7 +2,8 @@ import re
 
 from typing import Literal
 
-from ..endpoints import EndpointConfig, Endpoint, CannedResponder, get_prompt, chain_prompts
+from ..endpoints import EndpointConfig, Endpoint, chain_prompts
+from ..metrics import Metrics
 
 from .solver import Solver, extract_words
 
@@ -23,11 +24,10 @@ def canned_response(msg: str, sys_msg: str | None) -> str:
 # Define model configuration for CoT prompting
 ENDPOINTS: EndpointConfig = {
     # "default": lambda metrics: CannedResponder(canned_response)
-    "default": lambda metrics: Endpoint(
+    "default": Endpoint(
         "groq",
         # model="llama-3.2-3b-preview",
         model="llama-3.2-90b-vision-preview",
-        metrics=metrics
     )
 }
 
@@ -38,7 +38,7 @@ class CoTSolver(Solver):
     supporting both zero-shot and one-shot modes.
     """
 
-    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
         cot_prompt = chain_prompts(
             [
                 "one_shot_without_category",
@@ -47,7 +47,7 @@ class CoTSolver(Solver):
             words=', '.join(word_bank)
         )
 
-        reasoning = ENDPOINTS['default'](self.metrics).respond(cot_prompt)
+        reasoning = ENDPOINTS['default'].respond(cot_prompt, metrics=metrics)
 
         print(f"Generated category reasoning: {reasoning}")
 

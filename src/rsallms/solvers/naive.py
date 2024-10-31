@@ -1,23 +1,24 @@
 import re
 
-from ..endpoints import Endpoint, generate_prompt, prepare_examples, EndpointConfig
+from ..endpoints import Endpoint, get_prompt, EndpointConfig, prepare_examples, EndpointConfig
+from ..metrics import Metrics
 
 from .solver import Solver, extract_words
 
 ENDPOINTS: EndpointConfig = {
-    "default": lambda metrics: Endpoint(
+    "default": Endpoint(
         "groq",
         # model="llama-3.2-1b-preview",  # this is 4 cents per Mil. tok, i.e. free
         # model="llama-3.2-3b-preview",
-        model="llama-3.2-90b-vision-preview",
-        metrics=metrics
+        # model="llama-3.2-90b-vision-preview",
+        model="llama-3.1-70b-versatile"
     )
 }
 
 
 class NaiveSolver(Solver):
 
-    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set()) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
 
         num_shots = 0  
         category = None  #if category is None, no category will be given to agent
@@ -26,7 +27,9 @@ class NaiveSolver(Solver):
         
         system_prompt = get_prompt("system")
 
-        response = ENDPOINTS["default"](self.metrics).respond(message=prompt, system_prompt=system_prompt)
+        # TODO: replace the bottom two with a json structured response
+        response = ENDPOINTS["default"].respond(message=prompt, system_prompt=system_prompt, metrics=metrics)
+
 
         print(f'Got naive response: "{response}"')
 

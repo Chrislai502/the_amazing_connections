@@ -18,8 +18,7 @@ except:
 from .metrics import Metrics
 
 PROMPTS_FOLDER = importlib.resources.files("rsallms").joinpath("prompts")
-EndpointFactory: TypeAlias = Callable[[Metrics], "Endpoint"]
-EndpointConfig: TypeAlias = dict[str, EndpointFactory]
+EndpointConfig: TypeAlias = dict[str, "Endpoint"]
 
 
 @dataclass
@@ -56,9 +55,6 @@ class Endpoint:
     api_key: str | None = None
     """[Optional] The API key required to establish a connection"""
 
-    metrics: Metrics | None = None
-    """[Optional] The metrics instance to log token usage to"""
-
     CHAT_COMPLETION = "v1/chat/completions"
 
     def __post_init__(self):
@@ -76,7 +72,7 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None) -> str:
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None) -> str:
         headers = {"Content-Type": "application/json"}
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -107,8 +103,8 @@ class Endpoint:
             raise ValueError(
                 f"Malformed response from endpoint!: Got: {json_response}")
 
-        if self.metrics is not None:
-            self.metrics.add_tokens(
+        if metrics is not None:
+            metrics.add_tokens(
                 self.model,
                 prompt_tokens=json_response['usage']['prompt_tokens'],
                 completion_tokens=json_response['usage']['completion_tokens']
@@ -121,7 +117,7 @@ class CannedResponder(Endpoint):
         super().__init__("", "")
         self.responder = responder_func
 
-    def respond(self, message, system_prompt=None, temperature=None):
+    def respond(self, message, system_prompt=None, temperature=None, metrics=None):
         return self.responder(message, system_prompt)
 
 
