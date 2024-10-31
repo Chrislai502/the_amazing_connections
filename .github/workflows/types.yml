@@ -15,7 +15,7 @@ jobs:
           cache: 'pip' # caching pip dependencies
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -e .
 
       - name: Run PyRight with PyLance version
         uses: jakebailey/pyright-action@v2
