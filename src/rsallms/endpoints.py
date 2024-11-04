@@ -149,27 +149,27 @@ def prepare_examples(num_shots: int, include_category: bool = True) -> list[dict
         {
             'words': 'Bass, Flounder, Salmon, Trout, Ant, Drill, Island, Opal',
             'category': 'types of fish' if include_category else None,
-            'response': '{"groups": [{"reason": "types of fish", "words": ["Bass", "Flounder", "Salmon", "Trout"]}]}'
+            'response': '{"reason": "types of fish", "words": ["Bass", "Flounder", "Salmon", "Trout"]}'
         },
         {
             'words': 'Ant, Drill, Island, Opal, Bass, Flounder, Salmon, Trout',
             'category': 'things that start with FIRE' if include_category else None,
-            'response': '{"groups": [{"reason": "things that start with FIRE", "words": ["Ant", "Drill", "Island", "Opal"]}]}'
+            'response': '{"reason": "things that start with FIRE", "words": ["Ant", "Drill", "Island", "Opal"]}'
         },
         {
             'words': 'ALLEY, DRIVE, LANE, STREET, BLISS, CLOUD NINE, HEAVEN, PARADISE',
             'category': 'ROAD NAMES' if include_category else None,
-            'response': '{"groups": [{"reason": "ROAD NAMES", "words": ["ALLEY", "DRIVE", "LANE", "STREET"]}]}'
+            'response': '{"reason": "ROAD NAMES", "words": ["ALLEY", "DRIVE", "LANE", "STREET"]}'
         },
         {
             'words': 'BLISS, CLOUD NINE, HEAVEN, PARADISE, ALLEY, DRIVE, LANE, STREET',
             'category': 'STATES OF ELATION' if include_category else None,
-            'response': '{"groups": [{"reason": "STATES OF ELATION", "words": ["BLISS", "CLOUD NINE", "HEAVEN", "PARADISE"]}]}'
+            'response': '{"reason": "STATES OF ELATION", "words": ["BLISS", "CLOUD NINE", "HEAVEN", "PARADISE"]}'
         },
         {
             'words': 'CIRCUS, SATURN, TREE, WEDDING, BLISS, CLOUD NINE, HEAVEN, PARADISE',
             'category': 'THINGS WITH RINGS' if include_category else None,
-            'response': '{"groups": [{"reason": "THINGS WITH RINGS", "words": ["CIRCUS", "SATURN", "TREE", "WEDDING"]}]}'
+            'response': '{"reason": "THINGS WITH RINGS", "words": ["CIRCUS", "SATURN", "TREE", "WEDDING"]}'
         },
     ]
     examples = all_examples[:num_shots]

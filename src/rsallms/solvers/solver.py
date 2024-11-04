@@ -32,6 +32,18 @@ class Solver:
         """
         raise NotImplementedError
 
+    def guess_json_format(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
+        """
+        Guess a set of words that make up a Category in a game of Connections.
+        Should instantiate endpoints with the instance attribute `self.metrics`.
+
+        :param word_bank: All of the words remaining in a game of Connections
+        :param group_size: The number of words to guess as a group
+        :param previous_guesses: The previous failed guesses
+        :return: A list of words that make up the guessed category
+        """
+        raise NotImplementedError
+
     def play(self, game: Connections, commit_to: str | None = None) -> list[bool]:
         """
         Play a game of Connections.
@@ -42,7 +54,7 @@ class Solver:
         metrics = Metrics()
         previous_guesses: set[tuple[str, ...]] = set()
         while not game.is_over:
-            guess = self.guess(
+            guess = self.guess_json_format(
                 word_bank=game.all_words,
                 group_size=game.group_size,
                 previous_guesses=previous_guesses,
