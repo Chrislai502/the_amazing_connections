@@ -1,7 +1,7 @@
 from ..metrics import Metrics
 from ..game import Connections
 from ..endpoints import Endpoint, EndpointConfig
-
+import time
 
 ENDPOINTS: EndpointConfig = {
     "default": Endpoint(
@@ -43,8 +43,12 @@ class Solver:
         previous_guesses: set[tuple[str, ...]] = set()
         history: str
         history  = ""
+        iteration_count = 0
 
         while not game.is_over:
+            if iteration_count > 0 and iteration_count % 10 == 0:
+                time.sleep(90)
+            iteration_count += 1
             guess, reasoning = self.guess(
                 word_bank=game.all_words,
                 group_size=game.group_size,
@@ -80,13 +84,15 @@ def extract_words(response: str, word_bank: list[str], group_size: int) -> list[
     updated_response = ENDPOINTS["default"].respond(message=prompt_message, temperature=0.1)
                                                     # I would like for you to do the work. Don't provide any code for me to run. Instead just provide me 4 values.")
     print('Connections Guess of 4 words: ', updated_response)
-    guess = [
-        word for word in word_bank
-        if word.upper() in updated_response.upper()
-    ]
+    # guess = [
+    #     word for word in word_bank
+    #     if word.upper() in updated_response.upper()
+    # ]
+    guess = updated_response.upper().split()
 
-
-    if len(guess) != group_size:
+    guess = guess[:4] + [''] * (4 - len(guess))
+    if len(guess) < group_size:
+        guess = guess.append('')
         raise ValueError(f"Got improper guess!: {guess}")
 
     return guess
