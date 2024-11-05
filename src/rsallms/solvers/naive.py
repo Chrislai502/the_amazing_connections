@@ -1,6 +1,5 @@
-import re
 
-from ..endpoints import Endpoint, get_prompt, EndpointConfig, prepare_examples, EndpointConfig
+from ..endpoints import Endpoint, generate_prompt, get_prompt, EndpointConfig, EndpointConfig
 from ..metrics import Metrics
 
 from .solver import Solver, extract_words
