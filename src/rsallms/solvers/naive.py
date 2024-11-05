@@ -22,7 +22,7 @@ class NaiveSolver(Solver):
         num_shots = 0  
         category = None  #if category is None, no category will be given to agent
         prompt = generate_prompt(all_words=word_bank, category=category, num_shots=num_shots)
-        full_prompt = str(history) + prompt
+        full_prompt = str(history) + "\n" +  prompt
         print(f"Prompt sent to model:\n{full_prompt}\n")
         
         system_prompt = get_prompt("system")

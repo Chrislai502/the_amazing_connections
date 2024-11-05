@@ -5,7 +5,7 @@ from typing import Literal
 from ..endpoints import EndpointConfig, Endpoint, chain_prompts
 from ..metrics import Metrics
 
-from .solver import Solver, extract_words, extract_reasoning
+from .solver import Solver, extract_words
 
 
 def canned_response(msg: str, sys_msg: str | None) -> str:

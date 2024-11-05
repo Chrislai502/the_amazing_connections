@@ -1,7 +1,7 @@
 from ..metrics import Metrics
 from ..game import Connections
 from ..endpoints import Endpoint, EndpointConfig
-
+import time
 
 ENDPOINTS: EndpointConfig = {
     "default": Endpoint(
@@ -63,7 +63,7 @@ class Solver:
                 metrics.increment_failed_guesses()
                 if history == "":
                     history += "History: "
-                history += "Failed Guess: Word Grouping: " + str(guess) + " Reasoning: ```" + reasoning + "```" + "\n "
+                history += "Failed Guess: Word Grouping: " + str(guess) + " Reasoning: ```" + str(reasoning) + "```" + "\n "
             else:
                 guessed_cat_idx = game._og_groups.index(cat)
                 # TODO: fix the naming below (this'll probably be super hairy to do)
@@ -80,13 +80,16 @@ def extract_words(response: str, word_bank: list[str], group_size: int) -> list[
     updated_response = ENDPOINTS["default"].respond(message=prompt_message, temperature=0.1)
                                                     # I would like for you to do the work. Don't provide any code for me to run. Instead just provide me 4 values.")
     print('Connections Guess of 4 words: ', updated_response)
-    guess = [
-        word for word in word_bank
-        if word.upper() in updated_response.upper()
-    ]
+    # guess = [
+    #     word for word in word_bank
+    #     if word.upper() in updated_response.upper()
+    # ]
+    guess = updated_response.upper().split()
 
-
-    if len(guess) != group_size:
+    # Get a first 4 words that were guessed. If less than 4 words given then fill with empty
+    guess = guess[:4] + [''] * (4 - len(guess))
+    if len(guess) < group_size:
+        guess = guess.append('')
         raise ValueError(f"Got improper guess!: {guess}")
 
     return guess
