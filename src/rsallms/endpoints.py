@@ -39,6 +39,10 @@ class Endpoint:
         "groq": {
             "base_url": "https://api.groq.com/openai/",
             "api_key": "GROQ_API_KEY"
+        },
+        "lambda": {
+            "base_url": "https://api.lambdalabs.com/",
+            "api_key": "LAMBDA_API_KEY"
         }
     }
 
