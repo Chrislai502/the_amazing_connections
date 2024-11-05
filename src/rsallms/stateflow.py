@@ -1,13 +1,14 @@
 from enum import Enum, auto
 from typing import List
-from .game import Connections, Category, GameOverException
-from .metrics import Metrics
+from rsallms.metrics import Metrics
 import random
 import re
 import json
+from rsallms import CustomModelClient, Connections
 
 import autogen
 from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
+
 
 class State(Enum):
     INITIALIZATION = auto()
@@ -31,10 +32,17 @@ class StateFlowGame:
         self.current_category_level = 0
 
         # LLM configuration
-        self.llm_config = {
-            'model': 'gpt-3.5-turbo',
-            'temperature': 0.7
-        }
+        config_list_custom = autogen.config_list_from_json(
+            env_or_file="autogen_agents.json",
+            filter_dict={
+                "model_client_cls": ["CustomModelClient"]
+            },
+        )
+        self.llm_config = {"config_list": config_list_custom}
+        # self.llm_config = {
+        #     'model': 'gpt-3.5-turbo',
+        #     'temperature': 0.7
+        # }
 
         # Initialize agents
         self.alice_agent = AssistantAgent(
@@ -43,6 +51,7 @@ class StateFlowGame:
 Given the following words, provide a concise category that encompasses these words.""",
             llm_config=self.llm_config
         )
+        self.alice_agent.register_model_client(model_client_cls=CustomModelClient)
 
         self.bob_agent = AssistantAgent(
             name='Bob',
@@ -51,6 +60,8 @@ Given a category and a list of words, select exactly 4 words that best fit the c
 Provide your answer in the format: ["word1", "word2", "word3", "word4"]""",
             llm_config=self.llm_config
         )
+        self.bob_agent.register_model_client(model_client_cls=CustomModelClient)
+
 
         self.evaluator_agent = AssistantAgent(
             name='Evaluator',
@@ -59,6 +70,8 @@ Determine if Bob's predictions are correct. If correct, proceed to update the ga
 If incorrect, increment the strike count. If strikes reach 3, terminate the game.""",
             llm_config=self.llm_config
         )
+        self.evaluator_agent.register_model_client(model_client_cls=CustomModelClient)
+
 
         self.groupchat = GroupChat(
             agents=[self.alice_agent, self.bob_agent, self.evaluator_agent],
