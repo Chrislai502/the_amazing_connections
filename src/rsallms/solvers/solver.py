@@ -8,7 +8,7 @@ ENDPOINTS: EndpointConfig = {
         "groq",
         # model="llama-3.2-1b-preview",  # this is 4 cents per Mil. tok, i.e. free
         # model="llama-3.2-3b-preview",
-        model="llama-3.2-90b-vision-preview"
+        model="llama-3.2-90b-text-preview"
     )
 }
 
@@ -20,7 +20,7 @@ class Solver:
             raise TypeError("A Solver cannot be instantiated directly!"
                             "Instantiate a subclass instead.")
 
-    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None,  history: str = "") -> tuple[tuple[str, ...], str]:
         """
         Guess a set of words that make up a Category in a game of Connections.
         Should instantiate endpoints with the instance attribute `self.metrics`.
@@ -41,12 +41,16 @@ class Solver:
         """
         metrics = Metrics()
         previous_guesses: set[tuple[str, ...]] = set()
+        history: str
+        history  = ""
+
         while not game.is_over:
-            guess = self.guess(
+            guess, reasoning = self.guess(
                 word_bank=game.all_words,
                 group_size=game.group_size,
                 previous_guesses=previous_guesses,
                 metrics=metrics,
+                history=history
             )
             guessed_cat = "placeholder" # have to figure out how to do this
             cat = game.category_guess_check(list(guess))
@@ -57,6 +61,9 @@ class Solver:
                 previous_guesses.add(guess)
                 metrics.hallucination_words(list(guess), game.all_words)
                 metrics.increment_failed_guesses()
+                if history == "":
+                    history += "History: "
+                history += "Failed Guess: Word Grouping: " + str(guess) + " Reasoning: ```" + reasoning + "```" + "\n "
             else:
                 guessed_cat_idx = game._og_groups.index(cat)
                 # TODO: fix the naming below (this'll probably be super hairy to do)
@@ -83,3 +90,9 @@ def extract_words(response: str, word_bank: list[str], group_size: int) -> list[
         raise ValueError(f"Got improper guess!: {guess}")
 
     return guess
+
+def extract_reasoning(response: str, guess: list[str]) -> str:
+    prompt_message = f"Given this chat response: ```{response}```, I would like to get the reasoning that the model used to come up with this guess: ```{guess}```. Please provide a max of 5 word that only correspond to the reasoning for the grouping of this guess: ```{guess}```. Be concise. No more than 5 words. "
+    updated_response = ENDPOINTS["default"].respond(message=prompt_message, temperature=0.1)
+    print('Connections Reasoning: ', updated_response)
+    return updated_response

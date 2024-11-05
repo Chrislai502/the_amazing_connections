@@ -5,7 +5,7 @@ from typing import Literal
 from ..endpoints import EndpointConfig, Endpoint, chain_prompts
 from ..metrics import Metrics
 
-from .solver import Solver, extract_words
+from .solver import Solver, extract_words, extract_reasoning
 
 
 def canned_response(msg: str, sys_msg: str | None) -> str:
@@ -38,7 +38,7 @@ class CoTSolver(Solver):
     supporting both zero-shot and one-shot modes.
     """
 
-    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[tuple[str, ...], str]:
         cot_prompt = chain_prompts(
             [
                 "one_shot_without_category",
@@ -54,4 +54,4 @@ class CoTSolver(Solver):
         # CoT Guessing: Extract guessed words from CoT response
         guess = extract_words(reasoning, word_bank, group_size)
 
-        return tuple(guess)
+        return tuple(guess), reasoning

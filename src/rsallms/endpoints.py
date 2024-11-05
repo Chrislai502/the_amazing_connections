@@ -77,7 +77,7 @@ class Endpoint:
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
         if temperature is None:
-            temperature = 0.1
+            temperature = 0.7
         messages = [{"role": "user", "content": message}]
         if system_prompt is not None:
             messages.insert(0, {"role": "system", "content": system_prompt})
