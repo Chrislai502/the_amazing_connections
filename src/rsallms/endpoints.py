@@ -5,6 +5,7 @@ from typing import TypeAlias, Callable
 from dataclasses import dataclass
 from typing import Callable
 from os import environ as env
+import time
 
 import chevron
 import requests
@@ -72,7 +73,7 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None) -> str:
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 0) -> str:
         headers = {"Content-Type": "application/json"}
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -97,6 +98,11 @@ class Endpoint:
             raise e
 
         if 'error' in json_response:
+            if 'retry-after' in response.headers:
+                retry_after = int(response.headers['retry-after'])
+                time.sleep(retry_after)
+                if retries > 0:
+                    return self.respond(message, system_prompt, temperature, metrics, retries - 1)
             raise ValueError(
                 f"Error in endpoint request!: {json_response['error']}")
         if 'choices' not in json_response:
