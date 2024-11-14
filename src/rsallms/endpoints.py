@@ -1,9 +1,9 @@
 
 import importlib.resources
+import json
 
-from typing import TypeAlias, Callable
+from typing import TypeAlias, Callable, Any, TypedDict
 from dataclasses import dataclass
-from typing import Callable
 from os import environ as env
 
 import chevron
@@ -72,24 +72,23 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None) -> str:
+    def _make_request(self, messages: list[dict[str, str]], request_params: dict[str, Any] = {}) -> requests.Response:
         headers = {"Content-Type": "application/json"}
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        if temperature is None:
-            temperature = 0.1
-        messages = [{"role": "user", "content": message}]
-        if system_prompt is not None:
-            messages.insert(0, {"role": "system", "content": system_prompt})
 
         data = {
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "temperature": temperature 
+            **request_params
         }
+
         response = requests.post(self.chat_url, headers=headers, json=data)
 
+        return response
+
+    def _parse_response(self, response: requests.Response, metrics: Metrics | None) -> dict:
         try:
             json_response = response.json()
         except Exception as e:
@@ -109,8 +108,72 @@ class Endpoint:
                 prompt_tokens=json_response['usage']['prompt_tokens'],
                 completion_tokens=json_response['usage']['completion_tokens']
             )
+
+        return json_response
+
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None) -> str:
+        messages = [{"role": "user", "content": message}]
+        if system_prompt is not None:
+            messages.insert(0, {"role": "system", "content": system_prompt})
+
+        req_params = {
+            'temperature' : 0.1 if temperature is None else temperature
+        }
+        
+        response = self._make_request(messages, req_params)
+        json_response = self._parse_response(response, metrics)
+        
         return json_response['choices'][0]['message']['content']
 
+    def extract_words(self, completion: str, num_words: int = 4, metrics: Metrics | None = None) -> tuple[str, str, str, str, str]:
+        class OAIGuess(TypedDict):
+            category: str
+            word1: str
+            word2: str
+            word3: str
+            word4: str
+
+        SCHEMA = {
+            "type": 'object',
+            "description": 'A single guess of a category in ',
+            "properties": {
+                "category": {
+                    "type": 'string',
+                    "description": 'A short description of a guessed category'
+                },
+                **{
+                    f"word{i}": {
+                        "type": 'string',
+                        "description": 'A word in this category'
+                    } for i in range(1, num_words+1)
+                }
+            },
+            "additionalProperties": False,
+            "required": ['category',] + [f"word{i}" for i in range(1, num_words+1)]
+        }
+
+        TYPEDEF = "{\n    category: string;\n    " + \
+            "\n    ".join([
+                f"word{i}: string" 
+                for i in range(1, num_words+1)
+            ]) + \
+            "\n}"
+
+        response = self._make_request([
+            {"role" : "system", "content" : get_prompt("json_formatter.system")},
+            {"role" : "user", "content" : get_prompt("json_formatter", typedef=TYPEDEF, completion=completion)}
+        ])
+
+        parsed_completion = self._parse_response(response, metrics)
+
+        json_str = parsed_completion['choices'][0]['message']['content']
+
+        try:
+            guess: OAIGuess = json.loads(json_str)
+        except Exception as e:
+            raise ValueError("Failed to parse json", json_str) from e
+
+        return (guess['category'], guess['word1'], guess['word2'], guess['word3'], guess['word4'])
 
 class CannedResponder(Endpoint):
     def __init__(self, responder_func: Callable[[str, str | None], str]):
