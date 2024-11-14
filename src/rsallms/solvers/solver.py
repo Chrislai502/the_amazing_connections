@@ -43,8 +43,12 @@ class Solver:
         previous_guesses: set[tuple[str, ...]] = set()
         history: str
         history  = ""
+        iteration_count = 0
 
         while not game.is_over:
+            if iteration_count > 0 and iteration_count % 10 == 0:
+                time.sleep(90)
+            iteration_count += 1
             guess, reasoning = self.guess(
                 word_bank=game.all_words,
                 group_size=game.group_size,
