@@ -75,13 +75,13 @@ class Solver:
         return game.solved_categories
 
 
-def extract_words(response: str, word_bank: list[str], group_size: int) -> list[str]:
+def extract_words(response: str, word_bank: list[str], group_size: int, metrics: Metrics | None = None) -> list[str]:
     """
     Extract guessed words from Agent CoT reasoning
     :return: List of 4 words for Agent's Guess
     """
     prompt_message = f"Given this chat response: {response}, I would like to get the 4 words from the best guess that it has made. Only provide one line of response in this specific format: \"word1 word2 word3 word4\". Nothing else. "
-    updated_response = ENDPOINTS["default"].respond(message=prompt_message, temperature=0.1)
+    updated_response = ENDPOINTS["default"].respond(message=prompt_message, metrics=metrics, temperature=0.1)
                                                     # I would like for you to do the work. Don't provide any code for me to run. Instead just provide me 4 values.")
     print('Connections Guess of 4 words: ', updated_response)
     # guess = [
@@ -98,12 +98,12 @@ def extract_words(response: str, word_bank: list[str], group_size: int) -> list[
 
     return guess
 
-def extract_reasoning(response: str, guess: list[str]) -> str:
+def extract_reasoning(response: str, guess: list[str], metrics: Metrics | None = None) -> str:
     """
     Summarize Agent CoT reasoning
     :return:  2-5 word response for the reasoning on why it choose the 4 words for it's guess
     """
     prompt_message = f"Given this chat response: ```{response}```, I would like to get the reasoning that the model used to come up with this guess: ```{guess}```. Please provide a max of 5 word that only correspond to the reasoning for the grouping of this guess: ```{guess}```. Be concise. No more than 5 words. "
-    updated_response = ENDPOINTS["default"].respond(message=prompt_message, temperature=0.1)
+    updated_response = ENDPOINTS["default"].respond(message=prompt_message, metrics=metrics, temperature=0.1)
     print('Connections Reasoning: ', updated_response)
     return updated_response

@@ -33,8 +33,8 @@ class NaiveSolver(Solver):
 
         print(f'Got naive response: "{response}"')
 
-        guess = extract_words(response, word_bank, group_size)
-        reasoning = extract_reasoning(response, guess)
+        guess = extract_words(response, word_bank, group_size, metrics=metrics)
+        reasoning = extract_reasoning(response, guess, metrics=metrics)
 
         return tuple(guess), reasoning
 
