@@ -38,7 +38,7 @@ class CoTSolver(Solver):
     supporting both zero-shot and one-shot modes.
     """
 
-    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None) -> tuple[str, ...]:
+    def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None, history: str = "") -> tuple[tuple[str, ...], str]:
         cot_prompt = chain_prompts(
             [
                 "one_shot_without_category",
@@ -52,6 +52,6 @@ class CoTSolver(Solver):
         print(f"Generated category reasoning: {reasoning}")
 
         # CoT Guessing: Extract guessed words from CoT response
-        guess = extract_words(reasoning, word_bank, group_size)
+        guess = extract_words(reasoning, word_bank, group_size, metrics=metrics)
 
-        return tuple(guess)
+        return tuple(guess), reasoning
