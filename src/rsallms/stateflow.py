@@ -4,7 +4,7 @@ from rsallms.metrics import Metrics
 import random
 import re
 import json
-from rsallms import CustomModelClient, Connections
+from .rsallms import CustomModelClient, Connections
 
 import autogen
 from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
@@ -114,8 +114,7 @@ If incorrect, increment the strike count. If strikes reach 3, terminate the game
         self.current_candidate_words = selected_category.members
         self.current_category_level = selected_category.level
 
-        alice_prompt = f"Words: {', '.join(
-            self.current_candidate_words)}\nPlease provide a concise category that encompasses these words."
+        alice_prompt = f"Words: {', '.join(self.current_candidate_words)}\nPlease provide a concise category that encompasses these words."
 
         # Alice generates a category
         alice_response = self.alice_agent.complete(alice_prompt)
@@ -125,8 +124,7 @@ If incorrect, increment the strike count. If strikes reach 3, terminate the game
 
     def word_prediction(self):
         # Bob predicts words based on the category and the full set of words
-        bob_prompt = f"Category: {self.current_category}\nWords: {', '.join(
-            self.remaining_words)}\nPlease select exactly 4 words from the list that best fit the category.\nProvide your answer in the format: [\"word1\", \"word2\", \"word3\", \"word4\"]"
+        bob_prompt = f"Category: {self.current_category}\nWords: {', '.join(self.remaining_words)}\nPlease select exactly 4 words from the list that best fit the category.\nProvide your answer in the format: [\"word1\", \"word2\", \"word3\", \"word4\"]"
         bob_response = self.bob_agent.complete(bob_prompt)
         self.bob_predicted_words = self.parse_bob_response(bob_response)
         print(f"Bob's Predicted Words: {self.bob_predicted_words}")
@@ -177,8 +175,7 @@ If incorrect, increment the strike count. If strikes reach 3, terminate the game
                 self.state = State.CATEGORY_GENERATION
         else:
             # Incorrect
-            print(f"Incorrect guess. Bob's predicted words: {
-                  self.bob_predicted_words}")
+            print(f"Incorrect guess. Bob's predicted words: {self.bob_predicted_words}")
             self.strikes += 1
             self.metrics.increment_failed_guesses()
             # Check for hallucinations
