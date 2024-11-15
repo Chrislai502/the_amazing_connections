@@ -17,6 +17,7 @@ class State(Enum):
     EVALUATION = auto()
     TERMINATION = auto()
 
+
 class StateFlowGame:
     def __init__(self, game: Connections):
         self.game = game
@@ -51,7 +52,8 @@ class StateFlowGame:
 Given the following words, provide a concise category that encompasses these words.""",
             llm_config=self.llm_config
         )
-        self.alice_agent.register_model_client(model_client_cls=CustomModelClient)
+        self.alice_agent.register_model_client(
+            model_client_cls=CustomModelClient)
 
         self.bob_agent = AssistantAgent(
             name='Bob',
@@ -60,8 +62,8 @@ Given a category and a list of words, select exactly 4 words that best fit the c
 Provide your answer in the format: ["word1", "word2", "word3", "word4"]""",
             llm_config=self.llm_config
         )
-        self.bob_agent.register_model_client(model_client_cls=CustomModelClient)
-
+        self.bob_agent.register_model_client(
+            model_client_cls=CustomModelClient)
 
         self.evaluator_agent = AssistantAgent(
             name='Evaluator',
@@ -70,8 +72,8 @@ Determine if Bob's predictions are correct. If correct, proceed to update the ga
 If incorrect, increment the strike count. If strikes reach 3, terminate the game.""",
             llm_config=self.llm_config
         )
-        self.evaluator_agent.register_model_client(model_client_cls=CustomModelClient)
-
+        self.evaluator_agent.register_model_client(
+            model_client_cls=CustomModelClient)
 
         self.groupchat = GroupChat(
             agents=[self.alice_agent, self.bob_agent, self.evaluator_agent],
@@ -112,7 +114,8 @@ If incorrect, increment the strike count. If strikes reach 3, terminate the game
         self.current_candidate_words = selected_category.members
         self.current_category_level = selected_category.level
 
-        alice_prompt = f"Words: {', '.join(self.current_candidate_words)}\nPlease provide a concise category that encompasses these words."
+        alice_prompt = f"Words: {', '.join(
+            self.current_candidate_words)}\nPlease provide a concise category that encompasses these words."
 
         # Alice generates a category
         alice_response = self.alice_agent.complete(alice_prompt)
@@ -122,7 +125,8 @@ If incorrect, increment the strike count. If strikes reach 3, terminate the game
 
     def word_prediction(self):
         # Bob predicts words based on the category and the full set of words
-        bob_prompt = f"Category: {self.current_category}\nWords: {', '.join(self.remaining_words)}\nPlease select exactly 4 words from the list that best fit the category.\nProvide your answer in the format: [\"word1\", \"word2\", \"word3\", \"word4\"]"
+        bob_prompt = f"Category: {self.current_category}\nWords: {', '.join(
+            self.remaining_words)}\nPlease select exactly 4 words from the list that best fit the category.\nProvide your answer in the format: [\"word1\", \"word2\", \"word3\", \"word4\"]"
         bob_response = self.bob_agent.complete(bob_prompt)
         self.bob_predicted_words = self.parse_bob_response(bob_response)
         print(f"Bob's Predicted Words: {self.bob_predicted_words}")
@@ -134,44 +138,52 @@ If incorrect, increment the strike count. If strikes reach 3, terminate the game
             # Try to parse the response as a JSON array
             words = json.loads(response)
             if isinstance(words, list):
-                words = [word.strip().upper() for word in words if word.strip().upper() in [w.upper() for w in self.all_words]]
+                words = [word.strip().upper() for word in words if word.strip().upper() in [
+                    w.upper() for w in self.all_words]]
                 return words[:4]
         except json.JSONDecodeError:
             pass
         # If JSON parsing fails, use regex
         match = re.findall(r'["\']?(\w+)["\']?', response)
-        words = [word.strip().upper() for word in match if word.strip().upper() in [w.upper() for w in self.all_words]]
+        words = [word.strip().upper() for word in match if word.strip().upper() in [
+            w.upper() for w in self.all_words]]
         return words[:4]  # Limit to 4 words
 
     def evaluation(self):
         # Evaluate Bob's predictions
-        correct = set(self.bob_predicted_words) == set([word.upper() for word in self.current_candidate_words])
+        correct = set(self.bob_predicted_words) == set(
+            [word.upper() for word in self.current_candidate_words])
         if correct:
             # Correct
             print(f"Correctly identified category: {self.current_category}")
             # Update metrics
             self.metrics.add_solve(self.current_category_level)
             # Update category similarity metric
-            correct_category = next((cat for cat in self.game._og_groups if set(cat.members) == set(self.current_candidate_words)), None)
+            correct_category = next((cat for cat in self.game._og_groups if set(
+                cat.members) == set(self.current_candidate_words)), None)
             if correct_category:
-                self.metrics.cosine_similarity_category(self.current_category, correct_category.group)
+                self.metrics.cosine_similarity_category(
+                    self.current_category, correct_category.group)
             # Remove the correctly identified words from remaining words
             for word in self.current_candidate_words:
                 if word in self.remaining_words:
                     self.remaining_words.remove(word)
             # Remove the category from the game's categories
-            self.game.categories = [cat for cat in self.game.categories if cat.members != self.current_candidate_words]
+            self.game.categories = [
+                cat for cat in self.game.categories if cat.members != self.current_candidate_words]
             if not self.remaining_words or not self.game.categories:
                 self.state = State.TERMINATION
             else:
                 self.state = State.CATEGORY_GENERATION
         else:
             # Incorrect
-            print(f"Incorrect guess. Bob's predicted words: {self.bob_predicted_words}")
+            print(f"Incorrect guess. Bob's predicted words: {
+                  self.bob_predicted_words}")
             self.strikes += 1
             self.metrics.increment_failed_guesses()
             # Check for hallucinations
-            hallucinated_words = self.metrics.hallucination_words(self.bob_predicted_words, self.all_words)
+            hallucinated_words = self.metrics.hallucination_words(
+                self.bob_predicted_words, self.all_words)
             print(f"Hallucinated Words: {hallucinated_words}")
             if self.strikes >= self.max_strikes:
                 self.state = State.TERMINATION
@@ -188,4 +200,3 @@ If incorrect, increment the strike count. If strikes reach 3, terminate the game
             return self.evaluator_agent
         else:
             return None  # Terminate the chat
-
