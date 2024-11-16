@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from typing import List
-from rsallms.metrics import Metrics
+from metrics import Metrics
 import random
 import re
 import json
