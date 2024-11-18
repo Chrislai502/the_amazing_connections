@@ -119,7 +119,7 @@ class Endpoint:
 
         return json_response['choices'][0]['message']['content']
 
-    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 2) -> str:
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 1) -> str:
         messages = [{"role": "user", "content": message}]
         if system_prompt is not None:
             messages.insert(0, {"role": "system", "content": system_prompt})
@@ -183,7 +183,13 @@ class Endpoint:
                 "json_formatter", typedef=TYPEDEF, completion=completion)}
         ]
 
-        req_params = {}
+        req_params = {
+            # see https://platform.openai.com/docs/api-reference/chat/create#chat-create-response_format
+            "response_format" : {
+                "type": "json_schema",
+                "json_schema" : SCHEMA
+            }
+        }
 
         def retry() -> str:
             nonlocal retries
