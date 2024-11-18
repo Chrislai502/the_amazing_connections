@@ -1,12 +1,11 @@
 {{#instructions}}
-Here is the puzzle: There are 16 words, which form 4 groups of 4 words. Each group has some common theme that links the words.
+Here is the puzzle: There are {{num_words}} words, which form a groups of 4 words each. Each group has some common theme that links the words. 
+Your task is to group the words based on these themes. Come up with **one guess** each round and **stick with it**.
 You must use each of the {{num_words}} words, and use each word only once.
 Each group of 4 words are linked together in some way.
-The connection between words can be simple.
-An example of a simple connection would be {"reason":'types of fish', "words":["Bass", "Flounder", "Salmon", "Trout"]}.
-Categories can also be more complex, and require abstract or lateral thinking. An example of this type of connection would be {"reason": 'things that start with FIRE', "words": ['Ant', 'Drill', 'Island', 'Opal']}.
-Here are some other combinations: {"reason":'ROAD NAMES', "words":["ALLEY", "DRIVE", "LANE", "STREET"]}, {"reason":'STATES OF ELATION', "words":["BLISS", "CLOUD NINE", "HEAVEN", "PARADISE"]}, {"reason":'THINGS WITH RINGS', "words":["CIRCUS", "SATURN", "TREE", "WEDDING"]}.
+An example of a connection would be {"reason":'types of fish', "words":["Bass", "Flounder", "Salmon", "Trout"]}.
 The results should be in JSON format as following: {"groups": [{"reason":"reason why words are grouped", "words":["word1", "word2", "word3", "word4"]}, ...]}
+**Be concise.**
 {{/instructions}}
 
 {{#examples}}
@@ -27,8 +26,8 @@ Example Response:
 
 Here are some words: {{current_words}}.
 {{#current_category}}
-You are grouping words into the category '{{current_category}}'. Group four words from this list that belong to the category of '{{current_category}}'.
+Group four words that fit the category '{{current_category}}'. Come up with one guess and stick with it.
 {{/current_category}}
 {{^current_category}}
-Group four words from this list based on their similarities.
+Group four words based on their similarities. Come up with one guess and stick with it.
 {{/current_category}}
