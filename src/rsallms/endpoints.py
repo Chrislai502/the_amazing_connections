@@ -1,9 +1,9 @@
 
 import importlib.resources
+import json
 
-from typing import TypeAlias, Callable
+from typing import TypeAlias, Callable, Any, TypedDict
 from dataclasses import dataclass
-from typing import Callable
 from os import environ as env
 import time
 
@@ -73,24 +73,26 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 0) -> str:
+    class RetryError(Exception):
+        """The number of retries has been exceeded!"""
+
+    def _make_request(self, messages: list[dict[str, str]], request_params: dict[str, Any] = {}) -> requests.Response:
         headers = {"Content-Type": "application/json"}
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        if temperature is None:
-            temperature = 0.7
-        messages = [{"role": "user", "content": message}]
-        if system_prompt is not None:
-            messages.insert(0, {"role": "system", "content": system_prompt})
 
         data = {
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "temperature": temperature 
-        }
+            "temperature": 0.7
+        } | request_params
+
         response = requests.post(self.chat_url, headers=headers, json=data)
 
+        return response
+
+    def _parse_response(self, response: requests.Response, metrics: Metrics | None, retry: Callable[[], str]) -> str:
         try:
             json_response = response.json()
         except Exception as e:
@@ -101,8 +103,7 @@ class Endpoint:
             if 'retry-after' in response.headers:
                 retry_after = int(response.headers['retry-after'])
                 time.sleep(retry_after)
-                if retries > 0:
-                    return self.respond(message, system_prompt, temperature, metrics, retries - 1)
+                return retry()
             raise ValueError(
                 f"Error in endpoint request!: {json_response['error']}")
         if 'choices' not in json_response:
@@ -115,7 +116,100 @@ class Endpoint:
                 prompt_tokens=json_response['usage']['prompt_tokens'],
                 completion_tokens=json_response['usage']['completion_tokens']
             )
+
         return json_response['choices'][0]['message']['content']
+
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 1) -> str:
+        messages = [{"role": "user", "content": message}]
+        if system_prompt is not None:
+            messages.insert(0, {"role": "system", "content": system_prompt})
+
+        req_params = {
+            'temperature': temperature
+        } if temperature is not None else {}
+
+        def retry() -> str:
+            nonlocal retries
+            if retries > 0:
+                retries -= 1
+                response = self._make_request(messages, req_params)
+                parsed_response = self._parse_response(
+                    response, metrics, retry)
+                return parsed_response
+            raise Endpoint.RetryError
+
+        response = self._make_request(messages, req_params)
+        parsed_response = self._parse_response(response, metrics, retry)
+
+        return parsed_response
+
+    def extract_words(self, completion: str, num_words: int = 4, metrics: Metrics | None = None, retries: int = 1) -> tuple[str, str, str, str, str]:
+        class OAIGuess(TypedDict):
+            category: str
+            word1: str
+            word2: str
+            word3: str
+            word4: str
+
+        SCHEMA = {
+            "type": 'object',
+            "description": 'A single guess of a category in ',
+            "properties": {
+                "category": {
+                    "type": 'string',
+                    "description": 'A short description of a guessed category'
+                },
+                **{
+                    f"word{i}": {
+                        "type": 'string',
+                        "description": 'A word in this category'
+                    } for i in range(1, num_words+1)
+                }
+            },
+            "additionalProperties": False,
+            "required": ['category',] + [f"word{i}" for i in range(1, num_words+1)]
+        }
+
+        TYPEDEF = "{\n    category: string;\n    " + \
+            "\n    ".join([
+                f"word{i}: string"
+                for i in range(1, num_words+1)
+            ]) + \
+            "\n}"
+
+        messages = [
+            {"role": "system", "content": get_prompt("json_formatter.system")},
+            {"role": "user", "content": get_prompt(
+                "json_formatter", typedef=TYPEDEF, completion=completion)}
+        ]
+
+        req_params = {
+            # see https://platform.openai.com/docs/api-reference/chat/create#chat-create-response_format
+            "response_format" : {
+                "type": "json_schema",
+                "json_schema" : SCHEMA
+            }
+        }
+
+        def retry() -> str:
+            nonlocal retries
+            if retries > 0:
+                retries -= 1
+                response = self._make_request(messages, req_params)
+                parsed_response = self._parse_response(
+                    response, metrics, retry)
+                return parsed_response
+            raise Endpoint.RetryError
+
+        response = self._make_request(messages, req_params)
+        json_completion = self._parse_response(response, metrics, retry)
+
+        try:
+            guess: OAIGuess = json.loads(json_completion)
+        except Exception as e:
+            raise ValueError("Failed to parse json", json_completion) from e
+
+        return (guess['category'], guess['word1'], guess['word2'], guess['word3'], guess['word4'])
 
 
 class CannedResponder(Endpoint):
@@ -123,7 +217,7 @@ class CannedResponder(Endpoint):
         super().__init__("", "")
         self.responder = responder_func
 
-    def respond(self, message, system_prompt=None, temperature=None, metrics=None):
+    def respond(self, message, system_prompt=None, temperature=None, metrics=None, retries=2):
         return self.responder(message, system_prompt)
 
 
@@ -133,7 +227,8 @@ def get_prompt(name: str, **kwargs) -> str:
 
 
 def generate_prompt(all_words: list[str], category: str | None, num_shots: int):
-    examples = prepare_examples(num_shots, include_category=category is not None)
+    examples = prepare_examples(
+        num_shots, include_category=category is not None)
     prompt = get_prompt(
         'multi_shot_prompt',
         instructions={'num_words': len(all_words)},
@@ -142,6 +237,7 @@ def generate_prompt(all_words: list[str], category: str | None, num_shots: int):
         current_category=category  # This can be None
     )
     return prompt
+
 
 def prepare_examples(num_shots: int, include_category: bool = True) -> list[dict]:
     """
@@ -181,7 +277,6 @@ def prepare_examples(num_shots: int, include_category: bool = True) -> list[dict
     examples = all_examples[:num_shots]
 
     return examples
-
 
 
 def chain_prompts(files: list[str], **kwargs) -> str:
