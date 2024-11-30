@@ -8,7 +8,7 @@ ENDPOINTS: EndpointConfig = {
         "groq",
         # model="llama-3.2-1b-preview",  # this is 4 cents per Mil. tok, i.e. free
         # model="llama-3.2-3b-preview",
-        model="llama-3.2-90b-text-preview"
+        model="llama-3.1-70b-versatile"
     )
 }
 
@@ -62,8 +62,8 @@ class Solver:
                 metrics.hallucination_words(list(guess), game.all_words)
                 metrics.increment_failed_guesses()
                 if history == "":
-                    history += "History: "
-                history += "Failed Guess: Word Grouping: " + str(guess) + " Reasoning: ```" + str(reasoning) + "```" + "\n "
+                    history += "History: \n"
+                history += "Failed Guess: " + str(guess) + "\n "
             else:
                 guessed_cat_idx = game._og_groups.index(cat)
                 # TODO: fix the naming below (this'll probably be super hairy to do)

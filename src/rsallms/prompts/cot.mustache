@@ -1,0 +1,75 @@
+{{#instructions}}
+### Task Overview:
+You are given a set of words. Your job is to group them into categories based on a shared theme. Each group will contain exactly four words, and the connection between the words should be clear. You need to identify the relationships between the words and use those connections to form the correct groups.
+
+### Step-by-Step Guide:
+
+1. **Analyze the Words**  
+   - Look for any immediate connections. These could be:
+     - Categories (e.g., animals, cities, foods)
+     - Types of things (e.g., colors, instruments, professions)
+     - Shared contexts (e.g., famous characters, geographical locations)
+
+2. **Identify the Connection**  
+   - For each set of four words, consider what they have in common. 
+     - Examples of possible connections:  
+       - **Animals** (e.g., "Lion," "Tiger")  
+       - **Countries** (e.g., "France," "Japan")  
+       - **Fruits** (e.g., "Apple," "Banana")  
+       - **Instruments** (e.g., "Piano," "Guitar")
+
+3. **Group the Words**  
+   - After identifying the connection, group the words accordingly.
+   - Repeat this process for all sets of four words.
+
+4. **Provide Your Answer**  
+   - Return your answer in **JSON format**. Example:
+   
+   ```json
+   {
+     "groups": [
+       {
+         "reason": "types of fish",
+         "words": ["Bass", "Flounder", "Salmon", "Trout"]
+       },
+       {
+         "reason": "planets in our solar system",
+         "words": ["Mars", "Earth", "Jupiter", "Venus"]
+       }
+     ]
+   }
+   ```
+
+### Key Tips:
+- Each word is used **only once**.
+- The connections might be broad (e.g., animal types) or specific (e.g., types of pasta).
+- Trust your reasoning — if you're unsure, try a broad connection and see if it works for the majority of words.
+
+{{/instructions}}
+
+{{#examples}}
+Here are some words: {{words}}.
+
+{{#category}}
+Group four words from this list that belong to the category '{{category}}'.
+{{/category}}
+
+{{^category}}
+Group four words based on their similarities. Come up with one guess and stick with it.
+{{/category}}
+
+{{#response}}
+Example Response:
+{{response}}
+{{/response}}
+{{/examples}}
+
+Here are some words: {{current_words}}.
+
+{{#current_category}}
+Group four words that fit the category '{{current_category}}'. Come up with one guess and stick with it.
+{{/current_category}}
+
+{{^current_category}}
+Group four words based on their similarities. Come up with one guess and stick with it.
+{{/current_category}}
