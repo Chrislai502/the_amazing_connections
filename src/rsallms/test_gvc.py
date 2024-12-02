@@ -1,4 +1,4 @@
-from solvers import GVCSolver
+from rsallms import GVCSolver
 from game import Connections, load_daily_board
 
 def main():

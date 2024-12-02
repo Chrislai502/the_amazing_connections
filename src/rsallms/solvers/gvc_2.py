@@ -4,7 +4,7 @@ from ..metrics import Metrics
 # from ..endpoints import ENDPOINTS
 import os
 
-from autogen import ConversableAgent, GroupChat, GroupChatManager
+from autogen import ConversableAgent, GroupChat, GroupChatManager, Agent
 
 class GVCSolver(Solver):
     def __init__(self):
@@ -12,16 +12,8 @@ class GVCSolver(Solver):
         self.initialize_agents()
     
     def initialize_agents(self):
-        # self.llm_config = {
-        #     "config_list": [
-        #         {
-        #             "model": ENDPOINTS["default"].model,
-        #             "api_key": ENDPOINTS["default"].api_key,
-        #         }
-        #     ]
-        # }
-        self.llm_config = {"config_list": [{"model": "gpt-4o-mini", "api_key": os.environ.get("OPENAI_API_KEY")}]}
 
+        self.llm_config = {"config_list": [{"model": "gpt-4o-mini", "api_key": os.environ.get("OPENAI_API_KEY")}]}
 
         # Create agents using ConversableAgent
         self.guesser_agent = ConversableAgent(
@@ -58,11 +50,11 @@ class GVCSolver(Solver):
             words = message["content"]
             feedback = agent.memory.get('feedback', '')
             prompt = f"""{feedback}
-Given the following words: {words}
-Find a group of 4 related words and provide a category.
-Format:
-Group: word1, word2, word3, word4
-Category: category_name"""
+                        Given the following words: {words}
+                        Find a group of 4 related words and provide a category.
+                        Format:
+                        Group: word1, word2, word3, word4
+                        Category: category_name"""
             response = agent.llm_completion(prompt)
             agent.memory['feedback'] = ''
             return True, response
@@ -75,10 +67,10 @@ Category: category_name"""
             words = ', '.join(self.game.all_words)  # Use the full game board
             category = category_line.replace('Category:', '').strip()
             prompt = f"""Given the following words: {words}
-And the category: {category}
-Identify the 4 words that belong to this category.
-Format:
-Group: word1, word2, word3, word4"""
+                        And the category: {category}
+                        Identify the 4 words that belong to this category.
+                        Format:
+                        Group: word1, word2, word3, word4"""
             response = agent.llm_completion(prompt)
             return True, response
 
@@ -100,15 +92,15 @@ Group: word1, word2, word3, word4"""
 
         # Register reply functions using register_reply
         self.guesser_agent.register_reply(
-            trigger=None,  # Trigger on any message
+            trigger=[Agent, None],  # Trigger on any message
             reply_func=guesser_response
         )
         self.validator_agent.register_reply(
-            trigger=None,
+            trigger=[Agent, None],
             reply_func=validator_response
         )
         self.consensus_agent.register_reply(
-            trigger=None,
+            trigger=[Agent, None],
             reply_func=consensus_response
         )
 
@@ -123,6 +115,7 @@ Group: word1, word2, word3, word4"""
         :param history: History of previous interactions (unused here).
         :return: A tuple containing the guessed words and reasoning.
         """
+        
         # Prepare the game board as a string
         game_board_str = ', '.join(word_bank)
         initial_message = f"Words: {game_board_str}"

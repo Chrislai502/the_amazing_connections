@@ -2,7 +2,7 @@ from .solver import Solver
 from .rsa import RSASolver
 from .cot import CoTSolver
 from .naive import NaiveSolver
-from .gvc import GVCSolver
+from .gvc_2 import GVCSolver
 
 __all__ = [
     "Solver",

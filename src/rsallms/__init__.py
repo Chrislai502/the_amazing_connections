@@ -1,6 +1,6 @@
 from .endpoints import Endpoint
 from .game import Connections, Category, load_daily_board, load_games, load_json_to_connections
-from .solvers import Solver, RSASolver, CoTSolver, NaiveSolver
+from .solvers import Solver, RSASolver, CoTSolver, NaiveSolver, GVCSolver
 from .autogen_custom_agent import CustomModelClient
 
 __all__ = [
@@ -12,5 +12,6 @@ __all__ = [
     "RSASolver",
     "CoTSolver",
     "NaiveSolver",
-    "CustomModelClient"
+    "CustomModelClient",
+    "GVCSolver"
 ]
