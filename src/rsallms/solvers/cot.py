@@ -67,7 +67,6 @@ class CoTSolver(Solver):
                 history += "Failed Guess: " + str(guess) +  " Reasoning: ```" + str(reasoning) + "```" + "\n "
             else:
                 guessed_cat_idx = game._og_groups.index(cat)
-                # TODO: fix the naming below (this'll probably be super hairy to do)
                 metrics.add_solve(level=guessed_cat_idx)
                 metrics.cosine_similarity_category(guessed_cat=guessed_cat, correct_cat=cat.group)
 
