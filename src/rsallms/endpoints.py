@@ -73,7 +73,7 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 0) -> str:
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 2) -> str:
         headers = {"Content-Type": "application/json"}
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -87,7 +87,8 @@ class Endpoint:
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "temperature": temperature 
+            "temperature": temperature,
+            "max_tokens": 1000,
         }
         response = requests.post(self.chat_url, headers=headers, json=data)
 
@@ -132,10 +133,10 @@ def get_prompt(name: str, **kwargs) -> str:
         return chevron.render(f.read(), data=kwargs).strip()
 
 
-def generate_prompt(all_words: list[str], category: str | None, num_shots: int):
+def generate_prompt(all_words: list[str], category: str | None, num_shots: int, type: str = "multi_shot_prompt") -> str:
     examples = prepare_examples(num_shots, include_category=category is not None)
     prompt = get_prompt(
-        'multi_shot_prompt',
+        name=type,
         instructions={'num_words': len(all_words)},
         examples=examples,
         current_words=', '.join(all_words),
