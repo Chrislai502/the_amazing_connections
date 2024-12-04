@@ -22,8 +22,7 @@ class GVCSolver(Solver):
             }]
         }
         # Initialize tracking dictionaries
-        self.unsuccessful_guesses: Dict[str, List[Tuple[str, ...]]] = {}  # category -> list of failed word groups
-        self.successful_guesses: Dict[str, Tuple[str, ...]] = {}        # category -> successful word group
+        self.guesses: Dict[str, List[Tuple[str, ...]]] = {}  # category -> list of failed word groups
         self.initialize_agents()
 
     def initialize_agents(self):
@@ -61,8 +60,7 @@ class GVCSolver(Solver):
         """
         Reset the GVCSolver's tracking state for a new game.
         """
-        self.unsuccessful_guesses.clear()
-        self.successful_guesses.clear()
+        self.guesses.clear()
         logger.info("GVCSolver has been reset. Tracking sets cleared.")
 
     def guess(
@@ -91,21 +89,20 @@ class GVCSolver(Solver):
         for attempt in range(1, max_retries + 1):
             remaining_str = ', '.join(remaining_words)
             entire_str = ', '.join(entire_game_board)
+            successful = list(set(entire_game_board) - set(remaining_words))
+            print(successful)
 
             # Prepare feedback about unsuccessful and successful categories
             feedback = ""
-            if self.unsuccessful_guesses or self.successful_guesses:
+            if self.guesses:
                 feedback += "Note:\n"
-                if self.unsuccessful_guesses:
+                if self.guesses:
                     feedback += "- Be aware that the following category and word group pairs either do not match or the category isn't specific enough:\n"
-                    for category, word_groups in self.unsuccessful_guesses.items():
+                    for category, word_groups in self.guesses.items():
                         word_groups_str = '; '.join(['(' + ', '.join(group) + ')' for group in word_groups])
                         feedback += f"  * {category}: {word_groups_str}\n"
-                if self.successful_guesses:
-                    feedback += "- Do not repeat the following successfully guessed categories and ensure your guessed category doesn't overlap with any of these words:\n"
-                    for category, word_groups in self.successful_guesses.items():
-                        # word_groups_str = '; '.join(['(' + ', '.join(group) + ')' for group in word_groups])
-                        feedback += f"  * {category}: {word_groups}\n"
+                if successful:
+                    feedback += f"- Ensure that your guessed category does not overlap with any of these words: {successful}\n"
                 print(feedback)
 
             # Step 1: GuesserAgent generates a guess and category using remaining words
@@ -160,15 +157,17 @@ class GVCSolver(Solver):
 
             if consensus_result:
                 # Consensus reached; record successful guess
-                self.successful_guesses[guesser_category] = tuple(guesser_group)
+                if guesser_category not in self.guesses:
+                    self.guesses[guesser_category] = []
+                self.guesses[guesser_category].append(tuple(guesser_group))
                 logger.info(f"Consensus reached for category '{guesser_category}'.")
                 return tuple(guesser_group), guesser_category
             else:
                 # Consensus not reached; record unsuccessful guess
                 logger.info(f"Consensus not reached for category '{guesser_category}'. Attempt {attempt} of {max_retries}.")
-                if guesser_category not in self.unsuccessful_guesses:
-                    self.unsuccessful_guesses[guesser_category] = []
-                self.unsuccessful_guesses[guesser_category].append(tuple(guesser_group))
+                if guesser_category not in self.guesses:
+                    self.guesses[guesser_category] = []
+                self.guesses[guesser_category].append(tuple(guesser_group))
                 if attempt == max_retries:
                     logger.error("Consensus not reached after maximum retries. Unable to make a guess.")
                     raise ValueError("Consensus not reached after maximum retries. Unable to make a guess.")
@@ -213,4 +212,119 @@ class GVCSolver(Solver):
         elif isinstance(reply, dict):
             extracted_reply = reply.get('reply')
             if isinstance(extracted_reply, str):
-             
+                return extracted_reply
+            else:
+                logger.warning(f"{agent_name} returned a dict without a 'reply' string.")
+                return None
+        else:
+            logger.warning(f"{agent_name} returned an unsupported reply type: {type(reply)}.")
+            return None
+
+    def parse_guesser_reply(self, reply: str) -> Tuple[List[str], str]:
+        """
+        Parse the GuesserAgent's reply to extract the group and category.
+
+        :param reply: The raw reply from GuesserAgent.
+        :return: A tuple of the group of words and the category.
+        :raises ValueError: If the reply format is incorrect.
+        """
+        lines = reply.strip().split('\n')
+        group_line = next((line for line in lines if line.startswith('Group:')), '')
+        category_line = next((line for line in lines if line.startswith('Category:')), '')
+
+        if not group_line and not category_line:
+            raise ValueError("GuesserAgent's reply is missing both 'Group' and 'Category'.")
+        elif not group_line:
+            raise ValueError("GuesserAgent's reply is missing 'Group'.")
+        elif not category_line:
+            raise ValueError("GuesserAgent's reply is missing 'Category'.")
+
+        group = [word.strip() for word in group_line.replace('Group:', '').split(',')]
+        category = category_line.replace('Category:', '').strip()
+
+        if len(group) != 4:
+            raise ValueError(f"GuesserAgent's group contains {len(group)} words; expected exactly 4.")
+
+        return group, category
+
+    def parse_validator_reply(self, reply: str) -> List[str]:
+        """
+        Parse the ValidatorAgent's reply to extract the validated group.
+
+        :param reply: The raw reply from ValidatorAgent.
+        :return: A list of words representing the validated group.
+        :raises ValueError: If the reply format is incorrect.
+        """
+        lines = reply.strip().split('\n')
+        group_line = next((line for line in lines if line.startswith('Group:')), '')
+
+        if not group_line:
+            raise ValueError("ValidatorAgent's reply is missing 'Group'.")
+
+        group = [word.strip() for word in group_line.replace('Group:', '').split(',')]
+
+        if len(group) != 4:
+            raise ValueError("ValidatorAgent's group does not contain exactly 4 words.")
+
+        return group
+
+    def parse_consensus_reply(self, reply: str) -> bool:
+        """
+        Parse the ConsensusAgent's reply to determine if consensus is reached.
+
+        :param reply: The raw reply from ConsensusAgent.
+        :return: True if consensus is reached, False otherwise.
+        """
+        normalized = reply.strip().lower()
+        if "consensus reached" in normalized:
+            return True
+        elif "consensus not reached" in normalized:
+            return False
+        else:
+            logger.warning(f"Unexpected ConsensusAgent response: '{reply}'. Assuming consensus not reached.")
+            return False
+
+    def play(self, game: Connections, commit_to: Optional[str] = None) -> List[bool]:
+        """
+        Play the game using the GVCSolver.
+
+        :param game: The Connections game instance.
+        :param commit_to: Optional database to commit metrics.
+        :return: List indicating which categories were solved.
+        """
+        metrics = Metrics()
+        previous_guesses: Set[Tuple[str, ...]] = set()
+        entire_game_board = list(game.all_words)  # Capture the entire game board at start
+
+        while not game.is_over:
+            try:
+                remaining_words = game.all_words  # Current remaining words
+                guess, reasoning = self.guess(
+                    remaining_words=remaining_words,
+                    entire_game_board=entire_game_board,
+                    group_size=game.group_size,
+                    metrics=metrics
+                )
+                # Attempt to check the guess
+                cat = game.category_guess_check(list(guess))
+                logger.info(f"Guessed: {guess} --> {cat}")
+
+                if cat is None:
+                    previous_guesses.add(tuple(guess))
+                    metrics.hallucination_words(list(guess), remaining_words)
+                    metrics.increment_failed_guesses()
+                else:
+                    guessed_cat_idx = game._og_groups.index(cat)
+                    metrics.add_solve(level=guessed_cat_idx)
+                    metrics.cosine_similarity_category(guessed_cat=reasoning, correct_cat=cat.group)
+                    # No need to modify 'game.all_words' manually
+            except GameOverException as e:
+                logger.warning(str(e))
+                break
+            except Exception as e:
+                logger.error(f"An error occurred: {e}")
+                break
+
+        if commit_to:
+            metrics.commit(to_db=commit_to)
+        return game.solved_categories
