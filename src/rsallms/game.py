@@ -162,20 +162,22 @@ class Connections:
         SPORTS               |  True   | BASKETBALL, HOCKEY, ...
         '''
         """
+    
         categories_table: list[str] = [
-            f"{"Category":<20} | {"Solved?":^7} | {"Words"}",
-            "-" * (20 + 3 + 7 + 3 + len("Words") + 2)
+            f"{'Category':<20} | {'Solved?':^7} | {'Words'}",
+            "-" * (20 + 3 + 7 + 3 + len('Words') + 2)
         ] + [
             " | ".join([
                 f"{cat.group:<20}",
                 f"{str(cat not in self.categories):^7}",
-                f"{cat.members}"
+                f"{', '.join(cat.members)}"
             ])
             for cat in self._og_groups
         ]
         strikes_h = f"Strikes:{self.current_strikes:4d}/{self._max_strikes:4d}"
         solves_h = f"Solves:{len(self._og_groups) - len(self.categories):2d}"
         return f"{strikes_h:<20}{solves_h:<20}\n" + "\n".join(categories_table)
+
 
 
 def load_games() -> list[Connections]:
