@@ -84,7 +84,7 @@ class GVCSolver(Solver):
         if metrics is None:
             metrics = Metrics()
 
-        max_retries = 3
+        max_retries = 15
 
         for attempt in range(1, max_retries + 1):
             remaining_str = ', '.join(remaining_words)
@@ -97,23 +97,37 @@ class GVCSolver(Solver):
             if self.guesses:
                 feedback += "Note:\n"
                 if self.guesses:
-                    feedback += "- Be aware that the following category and word group pairs either do not match or the category isn't specific enough:\n"
+                    feedback += "- Be aware that the following category and word group pairs either do not match or the category isn't specific enough. Do not repeat them!:\n"
                     for category, word_groups in self.guesses.items():
                         word_groups_str = '; '.join(['(' + ', '.join(group) + ')' for group in word_groups])
                         feedback += f"  * {category}: {word_groups_str}\n"
                 if successful:
-                    feedback += f"- Ensure that your guessed category does not overlap with any of these words: {successful}\n"
+                    feedback += f"- Ensure that your guessed category does not encompass any of these words: {successful}\n"
                 print(feedback)
 
             # Step 1: GuesserAgent generates a guess and category using remaining words
             guesser_prompt = (
-                f"{feedback}"
-                f"Words: {remaining_str}\n"
-                f"Find a group of {group_size} related words and provide a category. Ensure the category is as specific as possible to the group of words, so there is no confusion of which words belong to said category.\n"
-                f"Format:\n"
+                f"{feedback}\n"
+                f"Words: {remaining_str}\n\n"
+                f"**Objective:**\n"
+                f"Find a group of {group_size} related words from the list above and provide a specific category that unambiguously describes the relationship between these words. The category should be as precise as possible to avoid any confusion with other words or potential categories.\n\n"
+                f"**Guidelines:**\n"
+                f"- Categories must be more specific than broad classifications like 'Names', 'Verbs', or '5-Letter Words'.\n"
+                f"- Each word in the group should clearly fit the category without overlapping into multiple categories. Be aware of common phrases, word play, and words with multiple meanings.\n"
+                f"- Avoid categories that are too vague or general and might encompass other words. Categories should be as specific as possible.\n\n"
+                f"**Examples:**\n"
+                f"1. **Group:** Bass, Flounder, Salmon, Trout\n"
+                f"   **Category:** Fish\n\n"
+                f"2. **Group:** Ant, Drill, Island, Opal\n"
+                f"   **Category:** Fire ___\n\n"
+                f"**Format Your Response As Follows:**\n"
+                f"```\n"
                 f"Group: word1, word2, word3, word4\n"
-                f"Category: category_name"
+                f"Category: category_name\n"
+                f"```\n"
+                f"Ensure there is no additional text or explanation beyond the specified format."
             )
+
 
             logger.info("GuesserAgent is generating a guess and category.")
             try:
@@ -126,12 +140,30 @@ class GVCSolver(Solver):
 
             # Step 2: ValidatorAgent validates the category using the entire game board
             validator_prompt = (
-                f"Given the following words: {entire_str}\n"
-                f"And the category: {guesser_category}\n"
-                f"Identify the 4 words that belong to this category.\n"
-                f"Format:\n"
-                f"Group: word1, word2, word3, word4"
+                f"{feedback}\n"
+                f"**Words:** {remaining_str}\n"
+                f"**Category:** {guesser_category}\n\n"
+                f"**Objective:**\n"
+                f"Identify the four words from the list above that belong to the specified category. Ensure that each selected word clearly fits the category without ambiguity.\n\n"
+                f"**Guidelines:**\n"
+                f"- The category is already provided and is specific. Focus solely on selecting the words that best match this category. Be aware of word play and words with multiple meanings.\n"
+                f"- Each word should unambiguously fit the category. Avoid selecting words that could belong to multiple categories unless they are a perfect fit.\n"
+                f"- Ensure that exactly four words are selected. Do not include more or fewer words.\n"
+                f"- Avoid using additional explanations or commentary. Only provide the required output in the specified format.\n\n"
+                f"**Examples:**\n"
+                f"1. **Category:** Fish\n"
+                f"   **Words:** Bass, Flounder, Salmon, Trout, Ant, Drill, Island, Opal\n"
+                f"   **Group:** Bass, Flounder, Salmon, Trout\n\n"
+                f"2. **Category:** Fire ___\n"
+                f"   **Words:** Ant, Drill, Island, Opal, Fire, Water, Earth, Air\n"
+                f"   **Group:** Ant, Drill, Island, Opal\n\n"
+                f"**Format Your Response As Follows:**\n"
+                f"```\n"
+                f"Group: word1, word2, word3, word4\n"
+                f"```\n"
+                f"Ensure there is no additional text or explanation beyond the specified format."
             )
+
 
             logger.info("ValidatorAgent is validating the guess based on the category.")
             try:
