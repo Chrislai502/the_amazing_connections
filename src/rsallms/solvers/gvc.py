@@ -283,4 +283,86 @@ class GVCSolver(Solver):
             raise ValueError(f"GuesserAgent's reply is missing '{missing}'.")
 
         group = [word.strip() for word in group_line.replace('Group:', '').split(',')]
-        category = category_line
+        category = category_line.replace('Category:', '').strip()
+
+        if len(group) != 4:
+            raise ValueError(f"GuesserAgent's group contains {len(group)} words; expected exactly 4.")
+
+        return group, category
+
+    def parse_validator_reply(self, reply: str) -> List[str]:
+        """
+        Parse the ValidatorAgent's reply to extract the validated group.
+
+        :param reply: The raw reply from ValidatorAgent.
+        :return: A list of words representing the validated group.
+        :raises ValueError: If the reply format is incorrect.
+        """
+        lines = reply.strip().split('\n')
+        group_line = next((line for line in lines if line.startswith('Group:')), '')
+
+        if not group_line:
+            raise ValueError("ValidatorAgent's reply is missing 'Group'.")
+
+        group = [word.strip() for word in group_line.replace('Group:', '').split(',')]
+
+        if len(group) != 4:
+            raise ValueError("ValidatorAgent's group does not contain exactly 4 words.")
+
+        return group
+
+    def parse_consensus_reply(self, reply: str) -> bool:
+        """
+        Parse the ConsensusAgent's reply to determine if consensus is reached.
+
+        :param reply: The raw reply from ConsensusAgent.
+        :return: True if consensus is reached, False otherwise.
+        """
+        normalized = reply.strip().lower()
+        if "consensus reached" in normalized:
+            return True
+        elif "consensus not reached" in normalized:
+            return False
+        logger.warning(f"Unexpected ConsensusAgent response: '{reply}'. Assuming consensus not reached.")
+        return False
+
+    def play(self, game: Connections, commit_to: Optional[str] = None) -> List[bool]:
+        """
+        Play the game using the GVCSolver.
+
+        :param game: The Connections game instance.
+        :param commit_to: Optional database to commit metrics.
+        :return: List indicating which categories were solved.
+        """
+        metrics = Metrics()
+        entire_game_board = list(game.all_words)
+
+        while not game.is_over:
+            try:
+                remaining_words = game.all_words
+                guess, category = self.guess(
+                    remaining_words=remaining_words,
+                    entire_game_board=entire_game_board,
+                    group_size=game.group_size,
+                    metrics=metrics
+                )
+                cat = game.category_guess_check(list(guess))
+                logger.info(f"Guessed: {guess} --> {cat}")
+
+                if cat is None:
+                    metrics.hallucination_words(list(guess), remaining_words)
+                    metrics.increment_failed_guesses()
+                else:
+                    guessed_cat_idx = game._og_groups.index(cat)
+                    metrics.add_solve(level=guessed_cat_idx)
+                    metrics.cosine_similarity_category(guessed_cat=category, correct_cat=cat.group)
+            except GameOverException as e:
+                logger.warning(str(e))
+                break
+            except Exception as e:
+                logger.error(f"An error occurred: {e}")
+                break
+
+        if commit_to:
+            metrics.commit(to_db=commit_to)
+        return game.solved_categories
