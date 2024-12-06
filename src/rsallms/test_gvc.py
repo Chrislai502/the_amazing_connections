@@ -1,8 +1,8 @@
-from rsallms.solvers.gvc_2 import GVCSolver
+from rsallms.solvers.gvc import GVCSolver
 from rsallms.game import Connections, load_daily_board, sample_game
 
 def main():
-    game = sample_game()  # Load the game instance
+    game = load_daily_board()  # Load the game instance
     solver = GVCSolver()
     solver.play(game)
 
