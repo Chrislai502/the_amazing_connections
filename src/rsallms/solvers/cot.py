@@ -1,17 +1,17 @@
-from ..endpoints import Endpoint, generate_prompt, get_prompt, EndpointConfig, EndpointConfig
+from ..endpoints import Endpoint, generate_prompt, get_prompt
 from ..metrics import Metrics
 from ..game import Connections
 from .solver import Solver, extract_words, extract_reasoning
 
-ENDPOINTS: EndpointConfig = {
-    "default": Endpoint(
-        "groq",
-        model="llama-3.1-70b-versatile"
-    )
-}
-
 
 class CoTSolver(Solver):
+
+    def __init__(self, endpoint_url: str = "groq", model: str = "llama-3.1-70b-versatile"):
+        super().__init__()
+        self.endpoint = Endpoint(
+            endpoint_url,
+            model=model
+        )
 
     def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None, history: str = "") -> tuple[tuple[str, ...], str]:
 
@@ -23,7 +23,7 @@ class CoTSolver(Solver):
 
         system_prompt = get_prompt("system")
 
-        response = ENDPOINTS["default"].respond(message=full_prompt, system_prompt=system_prompt, metrics=metrics, temperature=0.7)
+        response = self.endpoint.respond(message=full_prompt, system_prompt=system_prompt, metrics=metrics, temperature=0.7)
         
 
         print(f'Got cot response: "{response}"')

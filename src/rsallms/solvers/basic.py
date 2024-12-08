@@ -1,17 +1,17 @@
-from ..endpoints import Endpoint, generate_prompt, get_prompt, EndpointConfig, EndpointConfig
+from ..endpoints import Endpoint, generate_prompt
 from ..metrics import Metrics
 
-from .solver import Solver, extract_words, extract_reasoning
-
-ENDPOINTS: EndpointConfig = {
-    "default": Endpoint(
-        "groq",
-        model="llama-3.1-70b-versatile"
-    )
-}
+from .solver import Solver, extract_words
 
 
 class BasicSolver(Solver):
+
+    def __init__(self, endpoint_url: str = "groq", model: str = "llama-3.1-70b-versatile"):
+        super().__init__()
+        self.endpoint = Endpoint(
+            endpoint_url,
+            model=model
+        )
 
     def guess(self, word_bank: list[str], group_size: int = 4, previous_guesses: set[tuple[str, ...]] = set(), metrics: Metrics | None = None, history: str = "") -> tuple[tuple[str, ...], str]:
 
@@ -21,7 +21,7 @@ class BasicSolver(Solver):
         full_prompt = str(history) + "\n" +  prompt
         print(f"Prompt sent to model:\n{full_prompt}\n")
 
-        response = ENDPOINTS["default"].respond(message=full_prompt, system_prompt=None, metrics=metrics, temperature=0.7)
+        response = self.endpoint.respond(message=full_prompt, system_prompt=None, metrics=metrics, temperature=0.7)
         
 
         print(f'Got basic response: "{response}"')

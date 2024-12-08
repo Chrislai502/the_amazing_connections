@@ -73,7 +73,7 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 2) -> str:
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 1) -> str:
         headers = {"Content-Type": "application/json"}
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -124,7 +124,7 @@ class CannedResponder(Endpoint):
         super().__init__("", "")
         self.responder = responder_func
 
-    def respond(self, message, system_prompt=None, temperature=None, metrics=None):
+    def respond(self, message, system_prompt=None, temperature=None, metrics=None, retries=1):
         return self.responder(message, system_prompt)
 
 
