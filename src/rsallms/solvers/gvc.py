@@ -18,7 +18,8 @@ class GVCSolver(Solver):
         self.llm_config = {
             "config_list": [{
                 "model": "gpt-4o-mini",
-                "api_key": os.environ.get("OPENAI_API_KEY")
+                "api_key": os.environ.get("OPENAI_API_KEY"),
+                "temperature": .7
             }]
         }
         self.guesses: Dict[str, List[Tuple[str, ...]]] = {}
@@ -27,8 +28,9 @@ class GVCSolver(Solver):
     def initialize_agents(self):
         system_messages = {
     "GuesserAgent": (
-        "You are an Expert Word Grouping Agent. You understand literature, culture, and are well-versed in common phrases and wordplay. Given a list of words, "
-        "propose a group of 4 related words and a corresponding category. Try your best to select a category that only encompasses four words. Refer to the following examples of categories and word groups as guidance: "
+        "You are an Expert Word Grouping Agent. You deeply understand literature, culture, and are well-versed in common phrases and wordplay. Given a list of words, "
+        "propose a group of 4 related words and a corresponding category based on your knowledge. Select a category that is so specific that it only encompasses four words of the given list. Select a category such that someone could easily guess **ONLY** the corresponding words given only the category without thinking any of the other words could belong in the category. **Avoid giving categories similar to those already tried!**"
+        "Refer to the following examples of categories and word groups as guidance: "
         "\n\nSNEAKER BRANDS: adidas, nike, puma, reebok"
         "\nMUSICALS BEGINNING WITH “C”: cabaret, carousel, cats, chicago"
         "\nCLEANING VERBS: dust, mop, sweep, vacuum"
@@ -110,7 +112,7 @@ class GVCSolver(Solver):
         :raises ValueError: If consensus is not reached after maximum retries.
         """
         metrics = metrics or Metrics()
-        max_retries = 15
+        max_retries = 20
 
         for attempt in range(1, max_retries + 1):
             feedback = self._generate_feedback(entire_game_board, remaining_words)
@@ -165,10 +167,11 @@ class GVCSolver(Solver):
         feedback = ""
         if self.guesses:
             feedback += "Note:\n"
-            feedback += "- Be aware that the following category and word group pairs either do not match or the category isn't specific enough. **Do not repeat categories**!:\n"
+            feedback += "- Be aware that the following category and word group pairs either do not match or the category isn't specific enough:\n"
             for category, word_groups in self.guesses.items():
                 word_groups_str = '; '.join(['(' + ', '.join(group) + ')' for group in word_groups])
                 feedback += f"  * {category}: {word_groups_str}\n"
+        print(feedback)
         return feedback
 
     def _create_guesser_prompt(self, remaining_words: List[str], group_size: int, feedback: str) -> str:
@@ -176,18 +179,8 @@ class GVCSolver(Solver):
         remaining_str = ', '.join(remaining_words)
         return (
             f"{feedback}\n"
+            f"**Do not repeat category names**!"
             f"Words: {remaining_str}\n\n"
-            f"**Objective:**\n"
-            f"Find a group of {group_size} related words from the list above and provide a specific category that unambiguously describes the relationship between these words.\n\n"
-            f"**Guidelines:**\n"
-            f"- Categories must be more specific than broad classifications like 'Names', 'Verbs', or '5-Letter Words'.\n"
-            f"- Each word in the group should clearly fit the category without overlapping into multiple categories. Be aware of common phrases, word play, and words with multiple meanings.\n"
-            f"- Avoid categories that are too vague or general and might encompass other words.\n\n"
-            f"**Examples:**\n"
-            f"1. **Group:** Bass, Flounder, Salmon, Trout\n"
-            f"   **Category:** Fish\n\n"
-            f"2. **Group:** Ant, Drill, Island, Opal\n"
-            f"   **Category:** Fire ___\n\n"
             f"**Format Your Response As Follows:**\n"
             f"```\n"
             f"Group: word1, word2, word3, word4\n"
@@ -200,23 +193,9 @@ class GVCSolver(Solver):
         """Create the prompt for the ValidatorAgent."""
         remaining_str = ', '.join(remaining_words)
         return (
-            f"{feedback}\n"
+            # f"{feedback}\n"
             f"**Words:** {remaining_str}\n"
             f"**Category:** {category}\n\n"
-            f"**Objective:**\n"
-            f"Identify the four words from the list above that belong to the specified category. Ensure that each selected word clearly fits the category without ambiguity.\n\n"
-            f"**Guidelines:**\n"
-            f"- The category is already provided and is specific. Focus solely on selecting the words that best match this category. Be aware of word play and words with multiple meanings.\n"
-            f"- Each word should unambiguously fit the category. Avoid selecting words that could belong to multiple categories unless they are a perfect fit.\n"
-            f"- Ensure that exactly four words are selected. Do not include more or fewer words.\n"
-            f"- Avoid using additional explanations or commentary. Only provide the required output in the specified format.\n\n"
-            f"**Examples:**\n"
-            f"1. **Category:** Fish\n"
-            f"   **Words:** Bass, Flounder, Salmon, Trout, Ant, Drill, Island, Opal\n"
-            f"   **Group:** Bass, Flounder, Salmon, Trout\n\n"
-            f"2. **Category:** Fire ___\n"
-            f"   **Words:** Ant, Drill, Island, Opal, Fire, Water, Earth, Air\n"
-            f"   **Group:** Ant, Drill, Island, Opal\n\n"
             f"**Format Your Response As Follows:**\n"
             f"```\n"
             f"Group: word1, word2, word3, word4\n"
@@ -236,15 +215,16 @@ class GVCSolver(Solver):
         """
         reply = agent.generate_reply(
             messages=[
-                {"role": "system", "content": agent.system_message},
                 {"role": "user", "content": prompt}
             ]
         )
+
         logger.debug(f"{agent_name} raw reply: {reply}")
         reply_str = self._extract_reply_str(reply, agent_name)
         if not reply_str:
             logger.error(f"{agent_name} failed to generate a valid reply.")
             raise ValueError(f"{agent_name} failed to generate a valid reply.")
+        print(reply_str)
         return reply_str
 
     def _extract_reply_str(self, reply: Any, agent_name: str) -> Optional[str]:
