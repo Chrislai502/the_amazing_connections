@@ -85,7 +85,7 @@ class Connections:
             for cat in self._og_groups
         ]
 
-    def __init__(self, categories: list[Category], group_size: int = 4, max_strikes: int = 9999, starting_strikes: int = 0):
+    def __init__(self, categories: list[Category], group_size: int = 4, max_strikes: int = 20, starting_strikes: int = 0):
         """
         Initialize a Connections object with a list of categories and
         their associated members.
@@ -102,7 +102,6 @@ class Connections:
         if not all(len(group.members) == group_size for group in categories):
             raise ValueError(
                 f"All groups must have exactly {group_size} members")
-
         self._max_strikes = max_strikes
         self._og_groups = categories.copy()
         self.group_size = group_size

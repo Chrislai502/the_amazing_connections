@@ -5,6 +5,7 @@ from typing import TypeAlias, Callable
 from dataclasses import dataclass
 from typing import Callable
 from os import environ as env
+import time
 
 import chevron
 import requests
@@ -72,12 +73,12 @@ class Endpoint:
     def chat_url(self):
         return f"{self.base_url}/{Endpoint.CHAT_COMPLETION}"
 
-    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None) -> str:
+    def respond(self, message: str, system_prompt: str | None = None, temperature: float | None = None, metrics: Metrics | None = None, retries: int = 1) -> str:
         headers = {"Content-Type": "application/json"}
         if self.api_key is not None:
             headers["Authorization"] = f"Bearer {self.api_key}"
         if temperature is None:
-            temperature = 0.1
+            temperature = 0.7
         messages = [{"role": "user", "content": message}]
         if system_prompt is not None:
             messages.insert(0, {"role": "system", "content": system_prompt})
@@ -86,7 +87,8 @@ class Endpoint:
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "temperature": temperature 
+            "temperature": temperature,
+            "max_tokens": 1000,
         }
         response = requests.post(self.chat_url, headers=headers, json=data)
 
@@ -97,6 +99,11 @@ class Endpoint:
             raise e
 
         if 'error' in json_response:
+            if 'retry-after' in response.headers:
+                retry_after = int(response.headers['retry-after'])
+                time.sleep(retry_after)
+                if retries > 0:
+                    return self.respond(message, system_prompt, temperature, metrics, retries - 1)
             raise ValueError(
                 f"Error in endpoint request!: {json_response['error']}")
         if 'choices' not in json_response:
@@ -117,7 +124,7 @@ class CannedResponder(Endpoint):
         super().__init__("", "")
         self.responder = responder_func
 
-    def respond(self, message, system_prompt=None, temperature=None, metrics=None):
+    def respond(self, message, system_prompt=None, temperature=None, metrics=None, retries=1):
         return self.responder(message, system_prompt)
 
 
@@ -126,10 +133,10 @@ def get_prompt(name: str, **kwargs) -> str:
         return chevron.render(f.read(), data=kwargs).strip()
 
 
-def generate_prompt(all_words: list[str], category: str | None, num_shots: int):
+def generate_prompt(all_words: list[str], category: str | None, num_shots: int, type: str = "multi_shot_prompt") -> str:
     examples = prepare_examples(num_shots, include_category=category is not None)
     prompt = get_prompt(
-        'multi_shot_prompt',
+        name=type,
         instructions={'num_words': len(all_words)},
         examples=examples,
         current_words=', '.join(all_words),
