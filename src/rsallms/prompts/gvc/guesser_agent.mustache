@@ -22,7 +22,8 @@ In each round, you might or might not:
 1. Receive the remaining list of words to be guessed in the **Remaining Words** section.  
 2. See guess response from the game engine in the **Game Engine Feedback** section, showing prior failed guesses and their categories (if it’s your first round, feedback will be empty).  
 3. Receive reasoning or feedback from a Validator Agent in the **Validator Feedback** section, if they reject your guess for the round. The Validator Agent has the authority to reject your guess, so ensure cooperation to make progress in the game.
-4. Review your previous deductions from the **Last Deduction** section.  (if it’s your first round, Deduction will be empty).
+4. Review your previous understanding from the **Your Last Understanding** section (if it’s your first round, this will be empty).
+
 
 **Guidelines for Guesses:**  
 - Make guesses for all groups at once. Include a step-by-step reasoning process explaining how you arrived at your guesses. 
@@ -32,20 +33,19 @@ In each round, you might or might not:
 
 Start off by providing as much reasoning as you need to solve the problem, and then at the end, just include the following:
 
-An Indicator for your deduction of the board, denoted by the "<DEDUCTION_FROM_BOARD>" tag, and then the deduction as formatted:
+An indicator for your understanding of all the remaining words in the board, denoted by the "<UNDERSTANDING_OF_BOARD>" tag, and then the understanding as formatted:
 
-<DEDUCTION_FROM_BOARD>
-Group1: word1, word2, word3, word4
-Category Description: 
-Group2: word1, word2, word3, word4
-Category Description: 
-Group3: word1, word2, word3, word4
-Category Description: 
-Group4: word1, word2, word3, word4
-Category Description: 
+<UNDERSTANDING_OF_BOARD>
+Group1: word1, word2, word3, word4\n
+Category Description:\n
+Group2: word1, word2, word3, word4\n
+Category Description:\n
+...
+<END_UNDERSTANDING_OF_BOARD>
 
 Immediately followed by your guess for this round as follows. Remember that a valid guess must be of size {{group_size}}:
 
 <GUESS_FOR_THIS_ROUND>
 Group: word1, word2, word3, word4
 Category: category_name
+<END_GUESS_FOR_THIS_ROUND>

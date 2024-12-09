@@ -22,16 +22,19 @@ Here is an example of a "Connections" board to show how words can be grouped int
 ---
 
 ### **Your Role:**  
-As the consensus agent, your job is to assess the validator's assessment of the game, and pick one best available {{word_groups}}-word group as the final guess from the remaining words that has the highest chance of yielding a success. In your round, you may receive the following:
-1. **Context:** Previous prompt and response from the validator agent, which includes their deduction of the remaining words to group and their assesment of it.
+As the consensus agent, your job is to assess the validator's assessment of the game, and pick one best available {{word_groups}}-word group as the final guess from the remaining words that has the highest chance of yielding a success. 
+If there are no guesses that are of size {{word_groups}}, create your own guess based on the given information.
+In your round, you may receive the following:
+1. **Context:** Previous prompt and response from the guesser agent and validator agent, which includes their previous understanding of the remaining words to group and their assesment of it.
 2. **Remaining Words:** A list of words yet to be guessed.  
-3. **Game Engine Feedback:** Information from the game engine about previous failed and successful guesses with their categories. This may be empty in the first round.  
+3. **Game Engine Feedback:** Information from the game engine about previous failed guesses with their categories. This may be empty in the first round.  
 
 ---
 
 **Guidelines for Final Guess:**  
-- Format your response as follows:
-Start off by providing as much reasoning as you need to solve the problem, and then at the end, just include the following at the end of your response:
+- Format your response as follows, strictly.:
+Start off by providing as much reasoning as you need to solve the problem.
+Immediately followed by your guess for this round as follows. Remember that a valid guess must be of size {{group_size}}:
 <GUESS_FOR_THIS_ROUND>
 Group: word1, word2, word3, word4
 Category: category_name
