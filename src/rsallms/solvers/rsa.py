@@ -176,7 +176,6 @@ class RSASolver(Solver):
         # Pragmatic Speaker (S1)
         category_utterances: list[str] = s1.choose_categories(
             proposed_group, num_samples=1, metrics=metrics)
-        print(f"Generated categories: {category_utterances}")
 
         # Pragmatic Listener (L1)
         category_summary = category_utterances[0]
