@@ -95,8 +95,7 @@ class Endpoint:
         try:
             json_response = response.json()
         except Exception as e:
-            print(response.text)
-            raise e
+            raise Exception(response.text) from e
 
         if 'error' in json_response:
             if 'retry-after' in response.headers:

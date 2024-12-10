@@ -19,12 +19,8 @@ class BasicSolver(Solver):
         category = None  #if category is None, no category will be given to agent
         prompt = generate_prompt(all_words=word_bank, category=category, num_shots=num_shots, type='basic')
         full_prompt = str(history) + "\n" +  prompt
-        print(f"Prompt sent to model:\n{full_prompt}\n")
 
         response = self.endpoint.respond(message=full_prompt, system_prompt=None, metrics=metrics, temperature=0.7)
-        
-
-        print(f'Got basic response: "{response}"')
 
         guess = extract_words(response, word_bank, group_size, metrics=metrics)
         reasoning = "" # extract_reasoning(response, guess, metrics=metrics)

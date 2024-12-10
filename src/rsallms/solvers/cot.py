@@ -19,14 +19,10 @@ class CoTSolver(Solver):
         category = None  #if category is None, no category will be given to agent
         prompt = generate_prompt(all_words=word_bank, category=category, num_shots=num_shots, type='cot')
         full_prompt = str(history) + "\n" +  prompt
-        print(f"Prompt sent to model:\n{full_prompt}\n")
 
         system_prompt = get_prompt("system")
 
         response = self.endpoint.respond(message=full_prompt, system_prompt=system_prompt, metrics=metrics, temperature=0.7)
-        
-
-        print(f'Got cot response: "{response}"')
 
         guess = extract_words(response, word_bank, group_size, metrics=metrics)
         reasoning = extract_reasoning(response, guess, metrics=metrics)
@@ -55,7 +51,6 @@ class CoTSolver(Solver):
             )
             guessed_cat = "placeholder" # have to figure out how to do this
             cat = game.category_guess_check(list(guess))
-            print(f"Guessed: {guess} --> {cat}")
 
             wrong_guess = cat is None
             if wrong_guess:
