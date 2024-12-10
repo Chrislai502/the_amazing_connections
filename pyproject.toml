@@ -16,6 +16,7 @@ dependencies = [
     "python-dotenv",
     "sentence_transformers",
     "numpy",
+    "autogen"
 ]
 authors = [
     { name = "Nelson Lojo", email = "nelson.lojo@berkeley.edu"},
