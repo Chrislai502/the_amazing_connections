@@ -54,7 +54,7 @@ class Solver:
             )
             guessed_cat = "placeholder" # have to figure out how to do this
             cat = game.category_guess_check(list(guess))
-            print(f"Guessed: {guess} --> {cat}")
+            # print(f"Guessed: {guess} --> {cat}")
 
             wrong_guess = cat is None
             if wrong_guess:

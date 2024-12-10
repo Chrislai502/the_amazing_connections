@@ -171,7 +171,7 @@ class GVCSolver(Solver):
             for category, word_groups in self.guesses.items():
                 word_groups_str = '; '.join(['(' + ', '.join(group) + ')' for group in word_groups])
                 feedback += f"  * {category}: {word_groups_str}\n"
-        print(feedback)
+        # print(feedback)
         return feedback
 
     def _create_guesser_prompt(self, remaining_words: List[str], group_size: int, feedback: str) -> str:
@@ -224,7 +224,7 @@ class GVCSolver(Solver):
         if not reply_str:
             logger.error(f"{agent_name} failed to generate a valid reply.")
             raise ValueError(f"{agent_name} failed to generate a valid reply.")
-        print(reply_str)
+        # print(reply_str)
         return reply_str
 
     def _extract_reply_str(self, reply: Any, agent_name: str) -> Optional[str]:

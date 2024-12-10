@@ -31,3 +31,5 @@ maintainers = [
     { name = "Jackson Lukas", email = "jacksonlukas@berkeley.edu" },
 ]
 
+[project.scripts]
+run-solver = "rsallms.run:main"
