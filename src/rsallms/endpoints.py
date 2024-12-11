@@ -102,7 +102,7 @@ class Endpoint:
                 retry_after = int(response.headers['retry-after'])
                 time.sleep(retry_after)
                 if retries > 0:
-                    return self.respond(message, system_prompt, temperature, metrics, retries - 1)
+                    return self.respond(message, system_prompt, temperature, metrics, retries)
             raise ValueError(
                 f"Error in endpoint request!: {json_response['error']}")
         if 'choices' not in json_response:
