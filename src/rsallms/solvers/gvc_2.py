@@ -120,7 +120,7 @@ class GVCSolver(Solver):
         if metrics is None:
             metrics = Metrics()
 
-        max_retries = 8
+        max_retries = 15
         
         self.initialize_agents(self.get_prompts(group_size))
 
@@ -203,13 +203,14 @@ class GVCSolver(Solver):
             # Step 2: ValidatorAgent validates the category using the entire game board
             validator_prompt = (
                 f"**Context:**\n"
-                f"{self.guesser_reply}\n"
+                f"Guesser Agent's reply START: \"\"\"\n{self.guesser_reply}\n\"\"\"\n\nGuesser Agent's reply END\n\n"
                 f"**Remaining Words:**\n"
-                f"Words: {self.remaining_str}\n"  
-                "**Game Engine Feedback**\n"
+                f"Words left on the board: {self.remaining_str}\n\n"  
+                "**Game Engine Feedback**\n\n"
                 f"{self.feedback}\n"
             )
 
+            # logger.info(f"VALIDATOR PROMPT:\n\n{validator_prompt}")
 
             logger.info("ValidatorAgent: Validating the guess based on the category.")
             try:
@@ -303,6 +304,63 @@ class GVCSolver(Solver):
             logger.warning(f"{agent_name} returned an unsupported reply type: {type(reply)}.")
             return None
 
+    # def parse_guesser_reply(self, reply: str) -> Tuple[Tuple[List[str], str], Dict[str, List[str]]]:
+    #     """
+    #     Parse the GuesserAgent's reply to extract the guessed group, category, and overall board understanding.
+
+    #     :param reply: The raw reply from the GuesserAgent.
+    #     :return: A tuple containing:
+    #                 1. A tuple with the guesser's final guessed group (list of words) and its category (string).
+    #                 2. A dictionary where keys are category descriptions and values are lists of words for each understanding group.
+    #     :raises ValueError: If the reply format is incorrect or required sections are missing.
+    #     """
+    #     try:
+    #         # Normalize the input to remove extra spaces, blank lines, or unexpected text
+    #         normalized_reply = re.sub(r"\s*\n\s*", "\n", reply.strip())  # Normalize spaces and newlines
+    #         normalized_reply = re.sub(r"Below are the guesses:.*", "", normalized_reply, flags=re.DOTALL)  # Remove extra text between sections
+
+    #         # Extract <UNDERSTANDING_OF_BOARD> section
+    #         understanding_section = re.search(
+    #             r"<UNDERSTANDING_OF_BOARD>(.*?)<GUESS_FOR_THIS_ROUND>",
+    #             normalized_reply,
+    #             re.DOTALL
+    #         )
+    #         if not understanding_section:
+    #             raise ValueError("Missing <UNDERSTANDING_OF_BOARD> section.")
+    #         understandings_text = understanding_section.group(1).strip()
+
+    #         # Regex pattern to parse each group and its category description
+    #         understanding_pattern = re.compile(
+    #             r"Group\d+: (.*?)\nCategory Description: (.*?)(?:\n|$)",
+    #             re.DOTALL
+    #         )
+
+    #         # Parse groups and categories into a dictionary
+    #         understandings = {
+    #             match.group(2).strip(): [word.strip() for word in re.split(r",\s*", match.group(1))]
+    #             for match in understanding_pattern.finditer(understandings_text)
+    #         }
+
+    #         # Extract <GUESS_FOR_THIS_ROUND> section
+    #         guess_section = re.search(r"<GUESS_FOR_THIS_ROUND>(.*)", normalized_reply, re.DOTALL)
+    #         if not guess_section:
+    #             raise ValueError("Missing <GUESS_FOR_THIS_ROUND> section.")
+    #         guess_text = guess_section.group(1).strip()
+
+    #         # Parse the final guess group and its category
+    #         final_guess_pattern = re.compile(r"Group: (.*?)\nCategory: (.*)")
+    #         final_guess_match = final_guess_pattern.search(guess_text)
+    #         if not final_guess_match:
+    #             raise ValueError("Final guess format is incorrect.")
+
+    #         final_group = [word.strip() for word in re.split(r",\s*", final_guess_match.group(1))]
+    #         final_category = final_guess_match.group(2).strip()
+
+    #         return (final_group, final_category), understandings
+
+    #     except Exception as e:
+    #         raise ValueError(f"Error parsing reply: {str(e)}")
+
     def parse_guesser_reply(self, reply: str) -> Tuple[Tuple[List[str], str], Dict[str, List[str]]]:
         """
         Parse the GuesserAgent's reply to extract the guessed group, category, and overall board understanding.
@@ -314,13 +372,13 @@ class GVCSolver(Solver):
         :raises ValueError: If the reply format is incorrect or required sections are missing.
         """
         try:
-            # Normalize the input to remove extra spaces, blank lines, or unexpected text
+            # Normalize the input to remove extra spaces and blank lines
             normalized_reply = re.sub(r"\s*\n\s*", "\n", reply.strip())  # Normalize spaces and newlines
-            normalized_reply = re.sub(r"Below are the guesses:.*", "", normalized_reply, flags=re.DOTALL)  # Remove extra text between sections
+            normalized_reply = re.sub(r"Below are the guesses:.*", "", normalized_reply, flags=re.DOTALL)  # Remove extra text
 
             # Extract <UNDERSTANDING_OF_BOARD> section
             understanding_section = re.search(
-                r"<UNDERSTANDING_OF_BOARD>(.*?)<GUESS_FOR_THIS_ROUND>",
+                r"<UNDERSTANDING_OF_BOARD>(.*?)<END_UNDERSTANDING_OF_BOARD>",
                 normalized_reply,
                 re.DOTALL
             )
@@ -330,7 +388,7 @@ class GVCSolver(Solver):
 
             # Regex pattern to parse each group and its category description
             understanding_pattern = re.compile(
-                r"Group\d+: (.*?)\nCategory Description: (.*?)(?:\n|$)",
+                r"Group\d+: (.*?)\\n\nCategory Description:\s*(.*?)(?:\\n|$)",
                 re.DOTALL
             )
 
@@ -341,7 +399,11 @@ class GVCSolver(Solver):
             }
 
             # Extract <GUESS_FOR_THIS_ROUND> section
-            guess_section = re.search(r"<GUESS_FOR_THIS_ROUND>(.*)", normalized_reply, re.DOTALL)
+            guess_section = re.search(
+                r"<GUESS_FOR_THIS_ROUND>(.*?)<END_GUESS_FOR_THIS_ROUND>",
+                normalized_reply,
+                re.DOTALL
+            )
             if not guess_section:
                 raise ValueError("Missing <GUESS_FOR_THIS_ROUND> section.")
             guess_text = guess_section.group(1).strip()
@@ -448,7 +510,7 @@ class GVCSolver(Solver):
         metrics = Metrics()
         previous_guesses: Set[Tuple[str, ...]] = set()
         entire_game_board = list(game.all_words)  # Capture the entire game board at start
-        try_counter = 0
+        # try_counter = 0
         while not game.is_over:
             try:
                 remaining_words = game.all_words  # Current remaining words
@@ -473,9 +535,9 @@ class GVCSolver(Solver):
                     metrics.cosine_similarity_category(guessed_cat=reasoning, correct_cat=cat.group)
                     # self.successful_guesses[cat.group] = cat.members
                     # No need to modify 'game.all_words' manually
-                try_counter += 1
-                if try_counter == 6:
-                    raise NotImplementedError
+                # try_counter += 1
+                # if try_counter == 6:
+                #     raise NotImplementedError
             except GameOverException as e:
                 logger.warning(str(e))
                 break
