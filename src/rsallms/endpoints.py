@@ -9,6 +9,8 @@ import time
 
 import chevron
 import requests
+import re
+from datetime import timedelta
 
 import dotenv
 try:
@@ -101,10 +103,32 @@ class Endpoint:
             if 'retry-after' in response.headers:
                 retry_after = int(response.headers['retry-after'])
                 time.sleep(retry_after)
-                if retries > 0:
-                    return self.respond(message, system_prompt, temperature, metrics, retries)
-            raise ValueError(
-                f"Error in endpoint request!: {json_response['error']}")
+                return self.respond(message, system_prompt, temperature, metrics, retries)
+            elif 'x-ratelimit-reset-requests' in response.headers:  # time until rate limit resets for requests
+                reset_time = response.headers['x-ratelimit-reset-requests']
+                parsed_time = re.match(r'(?:(\d+)m)?([\d.]+)s', reset_time)
+                if not parsed_time:
+                    raise ValueError(
+                        f"Invalid time format in header: {reset_time}")
+                minutes = int(parsed_time.group(1) or 0) # in case no minutes
+                seconds = float(parsed_time.group(2))
+                sleep_time = timedelta(minutes=minutes, seconds=seconds).total_seconds()
+                return self.respond(message, system_prompt, temperature, metrics, retries)
+            elif 'x-ratelimit-reset-tokens' in response.headers: # time until rate limit resets for tokens
+                reset_time = response.headers['x-ratelimit-reset-tokens']
+                parsed_time = re.match(r'(?:(\d+)m)?([\d.]+)s', reset_time)
+                if not parsed_time:
+                    raise ValueError(
+                        f"Invalid time format in header: {reset_time}")
+                minutes = int(parsed_time.group(1) or 0) # in case no minutes
+                seconds = float(parsed_time.group(2))
+                sleep_time = timedelta(minutes=minutes, seconds=seconds).total_seconds()
+                time.sleep(sleep_time)
+                return self.respond(message, system_prompt, temperature, metrics, retries)
+            else:
+                print(response.headers)
+                raise ValueError(
+                    f"Error in endpoint request!: {json_response['error']}")
         if 'choices' not in json_response:
             raise ValueError(
                 f"Malformed response from endpoint!: Got: {json_response}")
