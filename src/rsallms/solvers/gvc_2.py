@@ -17,7 +17,7 @@ MUSTACHE_FILENAMES = {
     "GuesserAgent": "prompts/gvc/guesser_agent.mustache",
     "ValidatorAgent": "prompts/gvc/validator_agent.mustache",
     # "ConsensusAgent": "prompts/gvc/consensus_agent.mustache",
-    "GroundingAgent": "prompts/gvc/grounding_agent.mustache",
+    # "GroundingAgent": "prompts/gvc/grounding_agent.mustache",
     "SnapGuesserAgent": "prompts/gvc/snap_agent.mustache"
 }
 
@@ -73,6 +73,7 @@ class GVCSolver(Solver):
         
         # Max rounds per for Conservative Guessing Phase
         self.max_conservative_round_errors = 2
+        self.max_conservative_wrong_guesses = 2
         self.snap_correct = False
         
     # Import Agent System Prompts
@@ -117,12 +118,12 @@ class GVCSolver(Solver):
         #     llm_config=self.mini4o_llm_config,
         #     human_input_mode= "NEVER"
         # )
-        self.grounding_agent = ConversableAgent(
-            name="GroundingAgent",
-            system_message=system_messages["GroundingAgent"],
-            llm_config=self.mini4o_llm_config,
-            human_input_mode= "NEVER"
-        )
+        # self.grounding_agent = ConversableAgent(
+        #     name="GroundingAgent",
+        #     system_message=system_messages["GroundingAgent"],
+        #     llm_config=self.mini4o_llm_config,
+        #     human_input_mode= "NEVER"
+        # )
         self.snap_agent = ConversableAgent(
             name="SnapGuesserAgent",
             system_message=system_messages["SnapGuesserAgent"],
@@ -134,6 +135,9 @@ class GVCSolver(Solver):
         """
         Reset the GVCSolver's tracking state for a new game.
         """
+        self.reset_agents_state()
+        self.failed_guesses.clear()
+        self.sorted_failed_guesses = []
         self.guesses.clear()
         logger.info("GVCSolver has been reset. Tracking sets cleared.")
 
@@ -163,20 +167,16 @@ class GVCSolver(Solver):
             
             self.remaining_str = ', '.join(remaining_words)
             entire_str = ', '.join(entire_game_board)
-            # successful = list(set(entire_game_board) - set(remaining_words))
-
-            # Prepare feedback about unsuccessful and successful categories
-            self.feedback = ""
             
             # Adding Unsuccessful Guesses
             if len(self.failed_guesses.keys()) > 0:
+                # Prepare feedback about unsuccessful and successful categories
+                self.feedback = ""
                 self.feedback += (
                     "- The following categories represent word groups that have been guessed, but the Game Engine verified "
-                    "that these specific groups are not part of the final solution. Note that the Game Engine evaluates only "
-                    "the word groups, not the associated categories, which reflect the Guesser Agent's interpretation at the time of the guess. "
-                    "The categories may or may not accurately describe the word groups:\n"
+                    "that these specific groups are not part of the final solution:\n"
                 )
-                for category, word_groups in self.failed_guesses.items():
+                for word_groups in self.sorted_failed_guesses:
                     word_groups_str = ', '.join(word_groups)
                     self.feedback += f"  - {word_groups_str}\n"
 
@@ -190,11 +190,14 @@ class GVCSolver(Solver):
 
             # Step 1: GuesserAgent generates a guess and category using remaining words
             # Building Guesser Agent Prompt
-            guesser_prompt = (
-                f"**Game Engine Feedback**\n"
-                f"{self.feedback}\n"
-            )
+            guesser_prompt = ""
             
+            if self.feedback:
+                guesser_prompt = (
+                    f"**Game Engine Feedback**\n"
+                    f"{self.feedback}\n"
+                )
+                
             if self.guesser_past_understandings:
                 guesser_prompt += (
                     f"**Your Last Board Understanding**\n"
@@ -225,38 +228,46 @@ class GVCSolver(Solver):
             
 
             # Step 2: ValidatorAgent validates the category using the entire game board
-            validator_prompt = (
-                f"**Context:**\n"
-                f"Guesser Agent's reply START: \"\"\"\n{self.guesser_reply}\n\"\"\"\n\nGuesser Agent's reply END\n\n"
-                f"**Remaining Words:**\n"
-                f"Words left on the board: {self.remaining_str}\n\n"  
-                "**Game Engine Feedback**\n\n"
-                f"{self.feedback}\n"
-            )
-
-            # logger.info(f"VALIDATOR PROMPT:\n\n{validator_prompt}")
-
-            logger.info("ValidatorAgent: Validating the guess based on the category.")
-            try:
-                self.validator_reply = self._get_agent_reply(self.validator_agent, validator_prompt, "ValidatorAgent")
-                self.validator_dict = self.parse_validator_reply(self.validator_reply)
-            except ValueError as e:
-                logger.error(f"SOLVER: Error parsing ValidatorAgent's reply: {e}")
-                return (str("Error"), str("Error")), str("Error")
-
-            if self.validator_dict["agreement"]:
-                self.prev_validator_feedback_if_rejected = None
-                # Consensus reached; record successful guess
-                if guesser_category not in self.guesses:
-                    self.guesses[guesser_category] = []
-                self.guesses[guesser_category].append(tuple(guesser_group))
-                logger.info(f"SOLVER: Consensus reached for category '{guesser_category}'.")
-                logger.info(f"SOLVER: Attempt {attempt} of {self.max_retries}")
-                return tuple(guesser_group), guesser_category
+            if len(remaining_words) == group_size:
+                if self.grounding_check(guesser_group, remaining_words, group_size):
+                    return tuple(guesser_group), guesser_category
+                else:
+                    self.rejected_guesses_buffer.append(guesser_group)
+                    self.prev_validator_feedback_if_rejected = None
+                    logger.info(f"SOLVER: NO Consensus reached for category '{guesser_category}'. Attempt {attempt} of {self.max_retries}.")
             else:
-                self.rejected_guesses_buffer.append(guesser_group)
-                self.prev_validator_feedback_if_rejected = self.validator_dict["validator_feedback"]
-                logger.info(f"SOLVER: NO Consensus reached for category '{guesser_category}'. Attempt {attempt} of {self.max_retries}.")
+                validator_prompt = (
+                    f"**Context:**\n"
+                    f"Guesser Agent's reply START: \"\"\"\n{self.guesser_reply}\n\"\"\"\n\nGuesser Agent's reply END\n\n"
+                    f"**Remaining Words:**\n"
+                    f"Words left on the board: {self.remaining_str}\n\n"  
+                    "**Game Engine Feedback**\n\n"
+                    f"{self.feedback}\n"
+                )
+
+                # logger.info(f"VALIDATOR PROMPT:\n\n{validator_prompt}")
+
+                logger.info("ValidatorAgent: Validating the guess based on the category.")
+                try:
+                    self.validator_reply = self._get_agent_reply(self.validator_agent, validator_prompt, "ValidatorAgent")
+                    self.validator_dict = self.parse_validator_reply(self.validator_reply)
+                except ValueError as e:
+                    logger.error(f"SOLVER: Error parsing ValidatorAgent's reply: {e}")
+                    return (str("Error"), str("Error")), str("Error")
+
+                if self.validator_dict["agreement"]:
+                    self.prev_validator_feedback_if_rejected = None
+                    # Consensus reached; record successful guess
+                    if guesser_category not in self.guesses:
+                        self.guesses[guesser_category] = []
+                    self.guesses[guesser_category].append(tuple(guesser_group))
+                    logger.info(f"SOLVER: Consensus reached for category '{guesser_category}'.")
+                    logger.info(f"SOLVER: Attempt {attempt} of {self.max_retries}")
+                    return tuple(guesser_group), guesser_category
+                else:
+                    self.rejected_guesses_buffer.append(guesser_group)
+                    self.prev_validator_feedback_if_rejected = self.validator_dict["validator_feedback"]
+                    logger.info(f"SOLVER: NO Consensus reached for category '{guesser_category}'. Attempt {attempt} of {self.max_retries}.")
                 
         return (str("None"), str("None")), str("None")
 
@@ -300,9 +311,10 @@ class GVCSolver(Solver):
         if self.failed_guesses:
             self.feedback = ""
             self.feedback += (
-                "Note: Don't group words from the following specific groupings only:\n"
+                "Note: Refrain from guessing the following specific groups:\n"
+                # "Note: The below groups are not part of the solution:\n"
             )
-            for category, word_groups in self.failed_guesses.items():
+            for word_groups in self.sorted_failed_guesses:
                 word_groups_str = ', '.join(word_groups)
                 self.feedback += f"  - {word_groups_str}\n"
 
@@ -557,13 +569,13 @@ class GVCSolver(Solver):
     def reset_agents_state(self):
         self.guesser_past_understandings = None
         self.last_guess = None
+        self.rejected_guesses_buffer = deque(maxlen=self.max_retries)
         self.prev_validator_feedback_if_rejected = None
         self.validator_dict = {}
         self.guesser_reply = None
+        self.validator_reply = None
         self.remaining_str = None
         self.feedback = None
-        self.validator_reply = None
-        self.rejected_guesses_buffer = deque(maxlen=self.max_retries)
         self.snap_correct = False
 
     def play(self, game: Connections, commit_to: Optional[str] = None) -> List[bool]:
@@ -578,6 +590,7 @@ class GVCSolver(Solver):
         previous_guesses: Set[Tuple[str, ...]] = set()
         entire_game_board = list(game.all_words)  # Capture the entire game board at start
         error_counter = 0
+        wrong_counter = 0
         
         # Initialize Agents
         self.initialize_agents(self.get_prompts(game.group_size))
@@ -611,10 +624,14 @@ class GVCSolver(Solver):
                         metrics.hallucination_words(list(guess), remaining_words)
                         metrics.increment_failed_guesses()
                         self.failed_guesses[reasoning] = guess
+                        self.sorted_failed_guesses.append(sorted(guess))
+                        self.sorted_failed_guesses = self.insertion_sort_list(self.sorted_failed_guesses)
+                        wrong_counter += 1
                     else: # If the guess is correct
                         guessed_cat_idx = game._og_groups.index(cat)
                         metrics.add_solve(level=guessed_cat_idx)
                         metrics.cosine_similarity_category(guessed_cat=reasoning, correct_cat=cat.group)
+                        wrong_counter = 0 # Reset if Correct
                 except GameOverException as e:
                     logger.warning(str(e))
                     break
@@ -624,6 +641,10 @@ class GVCSolver(Solver):
                 
                 # "Reset the State of the agents"
                 self.reset_agents_state()
+                
+                if wrong_counter == self.max_conservative_wrong_guesses:
+                    self.reset_agents_state()
+                    break
 
             # Snap Guessing until the next correct guess
             self.snap_correct = False
@@ -651,7 +672,6 @@ class GVCSolver(Solver):
                         self.failed_guesses[reasoning] = guess
                         self.sorted_failed_guesses.append(sorted(guess))
                         self.sorted_failed_guesses = self.insertion_sort_list(self.sorted_failed_guesses)
-
                     else: # If the guess is correct
                         guessed_cat_idx = game._og_groups.index(cat)
                         metrics.add_solve(level=guessed_cat_idx)
@@ -670,4 +690,8 @@ class GVCSolver(Solver):
 
         if commit_to:
             metrics.commit(to_db=commit_to)
+        
+        # Reset all agent states
+        self.reset()    
+        
         return game.solved_categories
