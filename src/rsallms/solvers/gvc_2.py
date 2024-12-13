@@ -72,7 +72,7 @@ class GVCSolver(Solver):
         self.feedback = None
         
         # Max rounds per for Conservative Guessing Phase
-        self.max_conservative_rounds = 15
+        self.max_conservative_rounds = 2
         self.snap_correct = False
         
     # Import Agent System Prompts
@@ -180,13 +180,6 @@ class GVCSolver(Solver):
                     word_groups_str = ', '.join(word_groups)
                     self.feedback += f"  - {word_groups_str}\n"
 
-            # # Adding Successful Guesses
-            # if len(self.successful_guesses.keys()) > 0:
-            #     self.feedback += f"- These are Successful Guesses! Don't repeat guesses for these words:\n"
-            #     for category, word_groups in self.successful_guesses.items():
-            #         word_groups_str = '; '.join(word_groups)
-            #         self.feedback += f"  * {category}: {word_groups_str}\n"
-            
             # Adding In previous understandings
             previous_understandings_str = ""
             if self.guesser_past_understandings is not None:
@@ -223,14 +216,12 @@ class GVCSolver(Solver):
             logger.info("GuesserAgent: Generating a guess and category.")
             try:
                 self.guesser_reply = self._get_agent_reply(self.guesser_agent, guesser_prompt, "GuesserAgent")
-                # logger.info(f"GuesserAgent: Reply: {self.guesser_reply}")
                 self.last_guess, self.guesser_past_understandings = self.parse_guesser_reply(self.guesser_reply)
                 guesser_group, guesser_category = self.last_guess
-                # logger.info(f"GuesserAgent: Understanding for this round: {self.guesser_past_understandings}")
                 logger.info(f"GuesserAgent: Guessed group: {guesser_group} with category: {guesser_category}")
             except ValueError as e:
                 logger.error(f"SOLVER: Error parsing GuesserAgent's reply: {e}")
-                raise
+                return (str("Error"), str("Error")), str("Error")
             
 
             # Step 2: ValidatorAgent validates the category using the entire game board
@@ -251,7 +242,7 @@ class GVCSolver(Solver):
                 self.validator_dict = self.parse_validator_reply(self.validator_reply)
             except ValueError as e:
                 logger.error(f"SOLVER: Error parsing ValidatorAgent's reply: {e}")
-                raise
+                return (str("Error"), str("Error")), str("Error")
 
             if self.validator_dict["agreement"]:
                 self.prev_validator_feedback_if_rejected = None
@@ -269,7 +260,7 @@ class GVCSolver(Solver):
                 
         return (str("None"), str("None")), str("None")
 
-    def grounding_check(self, guess: List[str], remaining_words: List[str]) -> bool:
+    def grounding_check(self, guess: List[str], remaining_words: List[str], group_size: int) -> bool:
         # Rule 1: All words in the guess must be in the Remaining Words list
         for word in guess:
             if word not in remaining_words:
@@ -284,8 +275,8 @@ class GVCSolver(Solver):
                 return False
 
         # Rule 3: The guess must contain exactly `self.group_size` words
-        if len(guess) != 4:
-            logger.info(f"Validation Failed: Guess {guess} does not contain exactly {self.group_size} words.")
+        if len(guess) != group_size:
+            logger.info(f"Validation Failed: Guess {guess} does not contain exactly {group_size} words.")
             return False
 
         # If all checks pass, the guess is valid
@@ -332,16 +323,17 @@ class GVCSolver(Solver):
             logger.info(f"GuesserAgent: Guessed group: {guesser_group} with category: {guesser_category}")
         except ValueError as e:
             logger.error(f"SOLVER: Error parsing GuesserAgent's reply: {e}")
-            raise
+            return (str("None"), str("None")), str("None")
 
-        if self.grounding_check(guesser_group, remaining_words):
+
+        if self.grounding_check(guesser_group, remaining_words, group_size):
             if guesser_category not in self.guesses:
                 self.guesses[guesser_category] = []
             self.guesses[guesser_category].append(tuple(guesser_group))
             logger.info(f"SOLVER: Consensus reached for guess '{guesser_group}'")
             return tuple(guesser_group), guesser_category
         else:
-            logger.info(f"SOLVER: NO Consensus reached for category '{guesser_category}'. Attempt {attempt}.")
+            logger.info(f"SOLVER: NO Consensus reached for category '{guesser_category}'.")
         
         return (str("None"), str("None")), str("None")
 
@@ -424,10 +416,6 @@ class GVCSolver(Solver):
             )
 
             # Parse groups and categories into a list
-            # understandings = {
-            #     match.group(2).strip(): [word.strip() for word in re.split(r",\s*", match.group(1))]
-            #     for match in understanding_pattern.finditer(understandings_text)
-            # }
             understandings = [match.split(", ") for match in understanding_pattern.findall(understanding_section.group(1))]
 
             # Extract <GUESS_FOR_THIS_ROUND> section
@@ -477,16 +465,15 @@ class GVCSolver(Solver):
         
         return words, reason
 
-
-    def parse_grounding_reply(self, reply: str) -> Dict[str, Any]:
-        agreement_match = re.search(r"Agreement to Perform the Guess:\s*(True|False)", reply)
-        if not agreement_match:
-            raise ValueError("Missing 'Agreement to Perform the Guess' field.")
-        agreement = agreement_match.group(1) == "True"
+    # def parse_grounding_reply(self, reply: str) -> Dict[str, Any]:
+    #     agreement_match = re.search(r"Agreement to Perform the Guess:\s*(True|False)", reply)
+    #     if not agreement_match:
+    #         raise ValueError("Missing 'Agreement to Perform the Guess' field.")
+    #     agreement = agreement_match.group(1) == "True"
         
-        return {
-            "agreement": agreement,
-        }
+    #     return {
+    #         "agreement": agreement,
+    #     }
         
     def parse_validator_reply(self, reply: str) -> Dict[str, Any]:
         """
@@ -543,29 +530,6 @@ class GVCSolver(Solver):
         except Exception as e:
             raise ValueError(f"Error parsing validation report: {str(e)}")
 
-    def parse_consensus_reply(self, reply: str) -> Tuple[List[str], str]:
-        try:
-            # Extract final guess from <GUESS_FOR_THIS_ROUND> section
-            guess_section = re.search(r"<GUESS_FOR_THIS_ROUND>(.*)", reply, re.DOTALL)
-            if not guess_section:
-                raise ValueError("Missing <GUESS_FOR_THIS_ROUND> section.")
-            guess_text = guess_section.group(1).strip()
-
-            # Parse the final guess group and its category
-            final_guess_pattern = re.compile(r"Group: (.*?)\nCategory: (.*)")
-            final_guess_match = final_guess_pattern.search(guess_text)
-            if not final_guess_match:
-                raise ValueError("Final guess format is incorrect.")
-            
-            final_group = [word.strip() for word in final_guess_match.group(1).split(",")]
-            final_category = final_guess_match.group(2).strip()
-
-            return final_group, final_category
-
-        except Exception as e:
-            raise ValueError(f"Error parsing reply: {str(e)}")
-
-
     def insertion_sort_list(self, lst):
         """
         Sort a list in ascending order using the insertion sort algorithm.
@@ -589,6 +553,18 @@ class GVCSolver(Solver):
             lst[j + 1] = key
 
         return lst
+
+    def reset_agents_state(self):
+        self.guesser_past_understandings = None
+        self.last_guess = None
+        self.prev_validator_feedback_if_rejected = None
+        self.validator_dict = {}
+        self.guesser_reply = None
+        self.remaining_str = None
+        self.feedback = None
+        self.validator_reply = None
+        self.rejected_guesses_buffer = deque(maxlen=self.max_retries)
+        self.snap_correct = False
 
     def play(self, game: Connections, commit_to: Optional[str] = None) -> List[bool]:
         """
@@ -618,7 +594,12 @@ class GVCSolver(Solver):
                         metrics=metrics
                     )
                     
-                    if reasoning == str("None"): # No Consensus after 
+                    if reasoning == str("Error"): # Errored out, reset and retry
+                        self.reset_agents_state()
+                        counter += 1
+                        if counter == self.max_conservative_rounds:
+                            break
+                    if reasoning == str("None"): # No Consensus after internal looping
                         break
                     
                     # Attempt to check the guess
@@ -642,13 +623,7 @@ class GVCSolver(Solver):
                     break
                 
                 # "Reset the State of the agents"
-                self.guesser_past_understandings = None
-                self.last_guess = None
-                self.prev_validator_feedback_if_rejected = None
-                self.validator_dict = {}
-                self.guesser_reply = None
-                self.remaining_str = None
-                self.feedback = None
+                self.reset_agents_state()
                 
                 counter += 1
                 if counter == self.max_conservative_rounds:
@@ -695,13 +670,7 @@ class GVCSolver(Solver):
                     break
                 
                 # "Reset the State of the agents"
-                self.guesser_past_understandings = None
-                self.last_guess = None
-                self.prev_validator_feedback_if_rejected = None
-                self.validator_dict = {}
-                self.guesser_reply = None
-                self.remaining_str = None
-                self.feedback = None
+                self.reset_agents_state()
 
         if commit_to:
             metrics.commit(to_db=commit_to)

@@ -5,14 +5,13 @@ import numpy as np
 def main():
     # random.seed(41)
     # np.random.seed(41)
-    # random.seed(43)
-    # np.random.seed(43)
-    random.seed(42)
-    np.random.seed(42)
+    random.seed(43)
+    np.random.seed(43)
+    # random.seed(42)
+    # np.random.seed(42)
     
     game = sample_game()  # Load the game instance
     print(str(game))
-    # raise notImplementedError
     solver = GVCSolver()
     solver.play(game)
 
