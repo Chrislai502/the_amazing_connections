@@ -72,7 +72,7 @@ class GVCSolver(Solver):
         self.feedback = None
         
         # Max rounds per for Conservative Guessing Phase
-        self.max_conservative_rounds = 2
+        self.max_conservative_round_errors = 2
         self.snap_correct = False
         
     # Import Agent System Prompts
@@ -577,7 +577,7 @@ class GVCSolver(Solver):
         metrics = Metrics()
         previous_guesses: Set[Tuple[str, ...]] = set()
         entire_game_board = list(game.all_words)  # Capture the entire game board at start
-        counter = 0
+        error_counter = 0
         
         # Initialize Agents
         self.initialize_agents(self.get_prompts(game.group_size))
@@ -596,8 +596,8 @@ class GVCSolver(Solver):
                     
                     if reasoning == str("Error"): # Errored out, reset and retry
                         self.reset_agents_state()
-                        counter += 1
-                        if counter == self.max_conservative_rounds:
+                        error_counter += 1
+                        if error_counter == self.max_conservative_round_errors:
                             break
                     if reasoning == str("None"): # No Consensus after internal looping
                         break
@@ -624,10 +624,6 @@ class GVCSolver(Solver):
                 
                 # "Reset the State of the agents"
                 self.reset_agents_state()
-                
-                counter += 1
-                if counter == self.max_conservative_rounds:
-                    break
 
             # Snap Guessing until the next correct guess
             self.snap_correct = False
