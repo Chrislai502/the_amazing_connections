@@ -31,6 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("model", choices=[
         "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant",
+        "gpt-4o-mini"
     ])
     return parser.parse_args()
 
@@ -38,8 +39,12 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
+    solver = SOLVERS[args.solver_type](
+        endpoint_url="groq" if args.model.find("llama") != -1 else "oai",
+        model=args.model
+    )
     eval_games(
-        solver=SOLVERS[args.solver_type](model=args.model),
+        solver=solver,
         games=load_games()[args.start:args.end],
         db_name="_".join([
             args.solver_type,
