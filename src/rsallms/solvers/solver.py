@@ -8,7 +8,7 @@ ENDPOINTS: EndpointConfig = {
         "groq",
         # model="llama-3.2-1b-preview",  # this is 4 cents per Mil. tok, i.e. free
         # model="llama-3.2-3b-preview",
-        model="llama-3.1-70b-versatile"
+        model="llama-3.3-70b-versatile"
     )
 }
 
@@ -45,14 +45,13 @@ class Solver:
         history  = ""
 
         while not game.is_over:
-            guess, reasoning = self.guess(
+            guess, guessed_category = self.guess(
                 word_bank=game.all_words,
                 group_size=game.group_size,
                 previous_guesses=previous_guesses,
                 metrics=metrics,
                 history=history
             )
-            guessed_cat = "placeholder" # have to figure out how to do this
             cat = game.category_guess_check(list(guess))
             # print(f"Guessed: {guess} --> {cat}")
 
@@ -68,7 +67,7 @@ class Solver:
                 guessed_cat_idx = game._og_groups.index(cat)
                 # TODO: fix the naming below (this'll probably be super hairy to do)
                 metrics.add_solve(level=guessed_cat_idx)
-                metrics.cosine_similarity_category(guessed_cat=guessed_cat, correct_cat=cat.group)
+                metrics.cosine_similarity_category(guessed_cat=guessed_category, correct_cat=cat.group)
 
         if commit_to is not None:
             metrics.commit(to_db=commit_to)
@@ -103,5 +102,14 @@ def extract_reasoning(response: str, guess: list[str], metrics: Metrics | None =
     :return:  2-5 word response for the reasoning on why it choose the 4 words for it's guess
     """
     prompt_message = f"Given this chat response: ```{response}```, I would like to get the reasoning that the model used to come up with this guess: ```{guess}```. Please provide a max of 5 word that only correspond to the reasoning for the grouping of this guess: ```{guess}```. Be concise. No more than 5 words. "
+    updated_response = ENDPOINTS["default"].respond(message=prompt_message, metrics=metrics, temperature=0.1)
+    return updated_response
+
+def extract_guessed_category(response: str, guess: list[str], metrics: Metrics | None = None) -> str:
+    """
+    Provide the Category Name
+    :return:  2-5 word category name
+    """
+    prompt_message = f"Given this chat response: ```{response}```, I would like to get the cateogry name that the model used to come up with this guess: ```{guess}```. Please provide a max of 5 word that only correspond to the category name for the grouping of this guess: ```{guess}```. Be concise. No more than 5 words. "
     updated_response = ENDPOINTS["default"].respond(message=prompt_message, metrics=metrics, temperature=0.1)
     return updated_response

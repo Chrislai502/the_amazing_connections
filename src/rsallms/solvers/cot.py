@@ -1,12 +1,12 @@
 from ..endpoints import Endpoint, generate_prompt, get_prompt
 from ..metrics import Metrics
 from ..game import Connections
-from .solver import Solver, extract_words, extract_reasoning
+from .solver import Solver, extract_words, extract_guessed_category
 
 
 class CoTSolver(Solver):
 
-    def __init__(self, endpoint_url: str = "groq", model: str = "llama-3.1-70b-versatile"):
+    def __init__(self, endpoint_url: str = "groq", model: str = "llama-3.3-70b-versatile"):
         super().__init__()
         self.endpoint = Endpoint(
             endpoint_url,
@@ -25,9 +25,9 @@ class CoTSolver(Solver):
         response = self.endpoint.respond(message=full_prompt, system_prompt=system_prompt, metrics=metrics, temperature=0.7)
 
         guess = extract_words(response, word_bank, group_size, metrics=metrics)
-        reasoning = extract_reasoning(response, guess, metrics=metrics)
+        guess_category = extract_guessed_category(response, guess, metrics=metrics)
 
-        return tuple(guess), reasoning
+        return tuple(guess), guess_category
 
     def play(self, game: Connections, commit_to: str | None = None) -> list[bool]:
         """
@@ -49,7 +49,7 @@ class CoTSolver(Solver):
                 metrics=metrics,
                 history=history
             )
-            guessed_cat = "placeholder" # have to figure out how to do this
+            guessed_cat =  reasoning # have to figure out how to do this
             cat = game.category_guess_check(list(guess))
             # print(f"Guessed: {guess} ({reasoning}) --> {cat}")
 
