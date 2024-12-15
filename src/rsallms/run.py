@@ -31,7 +31,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("model", choices=[
         "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant",
-        "gpt-4o"
+        "gpt-4o",
+        "gpt-4o-mini"
     ])
     return parser.parse_args()
 
@@ -40,7 +41,7 @@ def main():
     args = parse_args()
 
     if args.solver_type == "gvc": 
-        solver = SOLVERS[args.solver_type]()
+        solver = SOLVERS[args.solver_type](model=args.model)
     elif args.model == "gpt-4o":
         solver = SOLVERS[args.solver_type]("oai", model=args.model)
     else:
@@ -49,11 +50,12 @@ def main():
     eval_games(
         solver=solver,
         games=load_games()[args.start:args.end],
-        db_name="_".join([
-            args.solver_type,
-            args.model,
-            f"{args.start}-{args.end}.db"
-        ])
+        db_name="gvc_gpt-4o-mini_0-100.db"
+        # db_name="_".join([
+        #     args.solver_type,
+        #     args.model,
+        #     f"{args.start}-{args.end}.db"
+        # ])
     )
 
 

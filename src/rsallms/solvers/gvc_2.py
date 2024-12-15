@@ -27,21 +27,31 @@ logger = logging.getLogger(__name__)
 RATING_SCALE = 5
 
 class GVCSolver(Solver):
-    def __init__(self):
+    def __init__(self, model="gpt-4o-mini"):
         super().__init__()
-        self.gpt4o_llm_config = {
-            "config_list": [{
-                "model": "gpt-4o",
-                "api_key": os.environ.get("OPENAI_API_KEY"),
-                "temperature": 1.00
-            }]
-        }
         
-        self.mini4o_llm_config = {
+        if model== "gpt-4o-mini":
+            self.conservative_llm_config = {
+                "config_list": [{
+                    "model": "gpt-4o-mini",
+                    "api_key": os.environ.get("OPENAI_API_KEY"),
+                    "temperature": 1.00
+                }]
+            }
+        else:
+            self.conservative_llm_config = {
+                "config_list": [{
+                    "model": "gpt-4o",
+                    "api_key": os.environ.get("OPENAI_API_KEY"),
+                    "temperature": 1.00
+                }]
+            }
+        
+        self.snap_llm_config = {
             "config_list": [{
                 "model": "gpt-4o-mini",
                 "api_key": os.environ.get("OPENAI_API_KEY"),
-                "temperature": 0.7
+                "temperature": 0.8
             }]
         }
         
@@ -103,13 +113,13 @@ class GVCSolver(Solver):
         self.guesser_agent = ConversableAgent(
             name="GuesserAgent",
             system_message=system_messages["GuesserAgent"],
-            llm_config=self.gpt4o_llm_config,
+            llm_config=self.conservative_llm_config,
             human_input_mode= "NEVER"
         )
         self.validator_agent = ConversableAgent(
             name="ValidatorAgent",
             system_message=system_messages["ValidatorAgent"],
-            llm_config=self.gpt4o_llm_config,
+            llm_config=self.conservative_llm_config,
             human_input_mode= "NEVER"
         )
         # self.consensus_agent = ConversableAgent(
@@ -127,7 +137,7 @@ class GVCSolver(Solver):
         self.snap_agent = ConversableAgent(
             name="SnapGuesserAgent",
             system_message=system_messages["SnapGuesserAgent"],
-            llm_config=self.mini4o_llm_config,
+            llm_config=self.snap_llm_config,
             human_input_mode= "NEVER"
         )
 
@@ -163,10 +173,7 @@ class GVCSolver(Solver):
             metrics = Metrics()
 
         for attempt in range(1, self.max_retries + 1):
-            # logger.info(f"SOLVER: Attempt {attempt} of {max_retries}")
-            
             self.remaining_str = ', '.join(remaining_words)
-            entire_str = ', '.join(entire_game_board)
             
             # Adding Unsuccessful Guesses
             if len(self.failed_guesses.keys()) > 0:
@@ -271,27 +278,54 @@ class GVCSolver(Solver):
                 
         return (str("None"), str("None")), str("None")
 
+    # def grounding_check(self, guess: List[str], remaining_words: List[str], group_size: int) -> bool:
+    #     # Rule 1: All words in the guess must be in the Remaining Words list
+    #     for word in guess:
+    #         if word not in remaining_words:
+    #             logger.info(f"Validation Failed: Word '{word}' is not in Remaining Words.")
+    #             return False
+
+    #     # Rule 2: The guess must not repeat any grouping in sorted_failed_guesses
+    #     if self.sorted_failed_guesses:
+    #         sorted_guess = sorted(guess)  # Sort the guess to allow for lexicographical comparison
+    #         if sorted_guess in self.sorted_failed_guesses:
+    #             logger.info(f"Validation Failed: Guess {sorted_guess} repeats a previously failed grouping.")
+    #             return False
+
+    #     # Rule 3: The guess must contain exactly `self.group_size` words
+    #     if len(guess) != group_size:
+    #         logger.info(f"Validation Failed: Guess {guess} does not contain exactly {group_size} words.")
+    #         return False
+
+    #     # If all checks pass, the guess is valid
+    #     logger.info(f"Validation Successful: Guess {guess} is valid.")
+    #     return True
+                
     def grounding_check(self, guess: List[str], remaining_words: List[str], group_size: int) -> bool:
+        # Preprocess both guess and remaining_words to handle case insensitivity and remove spaces/commas
+        processed_guess = [word.strip().lower().replace(",", "") for word in guess]
+        processed_remaining_words = [word.strip().lower().replace(",", "") for word in remaining_words]
+
         # Rule 1: All words in the guess must be in the Remaining Words list
-        for word in guess:
-            if word not in remaining_words:
+        for word in processed_guess:
+            if word not in processed_remaining_words:
                 logger.info(f"Validation Failed: Word '{word}' is not in Remaining Words.")
                 return False
 
         # Rule 2: The guess must not repeat any grouping in sorted_failed_guesses
         if self.sorted_failed_guesses:
-            sorted_guess = sorted(guess)  # Sort the guess to allow for lexicographical comparison
+            sorted_guess = sorted(processed_guess)  # Sort the guess to allow for lexicographical comparison
             if sorted_guess in self.sorted_failed_guesses:
                 logger.info(f"Validation Failed: Guess {sorted_guess} repeats a previously failed grouping.")
                 return False
 
-        # Rule 3: The guess must contain exactly `self.group_size` words
-        if len(guess) != group_size:
-            logger.info(f"Validation Failed: Guess {guess} does not contain exactly {group_size} words.")
+        # Rule 3: The guess must contain exactly `group_size` words
+        if len(processed_guess) != group_size:
+            logger.info(f"Validation Failed: Guess {processed_guess} does not contain exactly {group_size} words.")
             return False
 
         # If all checks pass, the guess is valid
-        logger.info(f"Validation Successful: Guess {guess} is valid.")
+        logger.info(f"Validation Successful: Guess {processed_guess} is valid.")
         return True
                 
 
@@ -311,7 +345,7 @@ class GVCSolver(Solver):
         if self.failed_guesses:
             self.feedback = ""
             self.feedback += (
-                "Note: Refrain from guessing the following specific groups:\n"
+                "Note: Do not return any groupings from the following specific groups:\n"
                 # "Note: The below groups are not part of the solution:\n"
             )
             for word_groups in self.sorted_failed_guesses:
