@@ -51,15 +51,12 @@ In each round, you may receive the following:
 ---
 
 ### **Guidelines for Evaluation Response:** 
-- **Sanity Check:** Check if the guesser agent's guess has {{group_size}} number of words in the guess. If not, immediately disagree to preform the guess.
 - **Agreement Decision:** Decide whether you agree with the guesser's proposed next guess. Your decision should aim to minimize inaccurate guesses while still progressing the game.
 - **Providing Feedback:** Provide clear and specific feedback to the guesser, focusing on areas to improve based on their last understanding of the board. Since the guesser agent will not have access to previous chat history, include enough context in your response to ensure the feedback is fully understandable on its own.
 
 ---
 
 ### **Response Format:***  
-- Reminder, check if the guesser agent's guess has {{group_size}} number of words in the guess. If not, immediately disagree to preform the guess.
-- If there is only {{group_size}} remaining of words, and the guesser agent's guess has {{group_size}} number of words in the guess, always allow the guess.
 - Start by providing reasoning for your decision, clearly explaining your analysis of the guesser's proposed guess.
 - Then, include the following format at the end of your response to indicate your decision:
 
