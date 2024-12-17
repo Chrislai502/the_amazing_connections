@@ -21,6 +21,8 @@ SOLVERS = {
 def eval_games(solver: Solver, games: list[Connections], db_name: str):
     for game in games:
         solver.play(game, commit_to=db_name)
+        if isinstance(solver, GVCSolver):
+            solver.reset()
 
 
 def parse_args() -> argparse.Namespace:
