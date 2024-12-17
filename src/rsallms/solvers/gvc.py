@@ -13,60 +13,47 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class GVCSolver(Solver):
-    def __init__(self):
+    def __init__(self, model):
         super().__init__()
-        self.llm_config = {
+        model = model
+        key = os.environ.get("OPENAI_API_KEY")
+        self.consensus_config = {
             "config_list": [{
-                "model": "gpt-4o-mini",
-                "api_key": os.environ.get("OPENAI_API_KEY"),
-                "temperature": .7
+                "model": model,
+                "api_key": key,
+                "temperature": .2
             }]
         }
+        self.guesser_config = {
+            "config_list": [{
+                "model": model,
+                "api_key": key,
+                "temperature": 1.1
+            }]
+        }
+        self.val_config = {
+            "config_list": [{
+                "model": model,
+                "api_key": key,
+                "temperature": .8
+            }]
+        }
+
         self.guesses: Dict[str, List[Tuple[str, ...]]] = {}
         self.initialize_agents()
 
     def initialize_agents(self):
         system_messages = {
     "GuesserAgent": (
-        "You are an Expert Word Grouping Agent. You deeply understand literature, culture, and are well-versed in common phrases and wordplay. Given a list of words, "
-        "propose a group of 4 related words and a corresponding category based on your knowledge. Select a category that is so specific that it only encompasses four words of the given list. Select a category such that someone could easily guess **ONLY** the corresponding words given only the category without thinking any of the other words could belong in the category. **Avoid giving categories similar to those already tried!**"
-        "Refer to the following examples of categories and word groups as guidance: "
-        "\n\nSNEAKER BRANDS: adidas, nike, puma, reebok"
-        "\nMUSICALS BEGINNING WITH “C”: cabaret, carousel, cats, chicago"
-        "\nCLEANING VERBS: dust, mop, sweep, vacuum"
-        "\n___ MAN SUPERHEROES: bat, iron, spider, super"
-        "\n\nSTREAMING SERVICES: hulu, netflix, peacock, prime"
-        "\nCONDIMENTS: ketchup, mayo, relish, tartar"
-        "\nSYNONYMS FOR SAD: blue, down, glum, low"
-        "\nCLUE CHARACTERS: green, mustard, plum, scarlet"
-        "\n\nMONOPOLY SQUARES: boardwalk, chance, go, jail"
-        "\nSHADES OF BLUE: baby, midnight, powder, royal"
-        "\nRAPPERS: common, future, ice cube, q-tip"
-        "\nMEMBERS OF A SEPTET: sea, sin, sister, wonder"
-        "\n\nLEG PARTS: ankle, knee, shin, thigh"
-        "\nBABY ANIMALS: calf, cub, joey, kid"
-        "\nSLANG FOR TOILET: can, head, john, throne"
-        "\n___ FISH THAT AREN’T FISH: cray, jelly, silver, star"
+        "You are an Expert Word Grouping Agent. You deeply understand literature, culture, and are well-versed in common phrases and wordplay. You know every definition of every word. You understand how to create fill in the blank category names. Given a list of words, "
+        "propose a group of 4 related words and a corresponding category based on your knowledge. Your category should be specific such that another agent could distinguish the group of four words from the word bank solely based on the category."
+        "**DO NOT GUESS A PREVIOUSLY GUESSED CATEGORY**."
+        "Refer to the following category examples as guidance: "
+        "CONTORTED, CUT THE ___, KINDS OF PICKLES, ESCAPADE, PUBLIC STANDING, GROUNDBREAKING, THINGS WITH SHELLS, INDIVIDUALITY, WORDS WITH APOSTROPHES REMOVED, EQUIP, EASY ___, LEGAL SESSION, HEARTWARMING, CORE EXERCISES, SNEAKER BRANDS, MUSICALS BEGINNING WITH “C”, CLEANING VERBS, ___ MAN SUPERHEROES, STREAMING SERVICES, CONDIMENTS, SYNONYMS FOR SAD, CLUE CHARACTERS, MONOPOLY SQUARES, SHADES OF BLUE, RAPPERS, MEMBERS OF A SEPTET, LEG PARTS, BABY ANIMALS, SLANG FOR TOILET, ___ FISH THAT AREN’T FISH"
     ),
     "ValidatorAgent": (
         "You are an Expert Word Grouping Agent. You understand literature, culture, and are well-versed in common phrases and wordplay. Given a list of words, "
-        "and a category, find the **4 words** that best fit the category. Refer to the following examples of categories and word groups as guidance: "
-        "\n\nSNEAKER BRANDS: adidas, nike, puma, reebok"
-        "\nMUSICALS BEGINNING WITH “C”: cabaret, carousel, cats, chicago"
-        "\nCLEANING VERBS: dust, mop, sweep, vacuum"
-        "\n___ MAN SUPERHEROES: bat, iron, spider, super"
-        "\n\nSTREAMING SERVICES: hulu, netflix, peacock, prime"
-        "\nCONDIMENTS: ketchup, mayo, relish, tartar"
-        "\nSYNONYMS FOR SAD: blue, down, glum, low"
-        "\nCLUE CHARACTERS: green, mustard, plum, scarlet"
-        "\n\nMONOPOLY SQUARES: boardwalk, chance, go, jail"
-        "\nSHADES OF BLUE: baby, midnight, powder, royal"
-        "\nRAPPERS: common, future, ice cube, q-tip"
-        "\nMEMBERS OF A SEPTET: sea, sin, sister, wonder"
-        "\n\nLEG PARTS: ankle, knee, shin, thigh"
-        "\nBABY ANIMALS: calf, cub, joey, kid"
-        "\nSLANG FOR TOILET: can, head, john, throne"
-        "\n___ FISH THAT AREN’T FISH: cray, jelly, silver, star"
+        "and a category, find exactly **4 words** that best fit the category."
     ),
     "ConsensusAgent": (
         "You are a Consensus Agent. Compare two groups of words and determine if they contain exactly the same words, regardless of their order. Respond with 'Consensus reached' if both groups have identical words, or 'Consensus not reached' otherwise."
@@ -76,23 +63,27 @@ class GVCSolver(Solver):
         self.guesser_agent = ConversableAgent(
             name="GuesserAgent",
             system_message=system_messages["GuesserAgent"],
-            llm_config=self.llm_config,
+            llm_config=self.guesser_config,
+            human_input_mode="NEVER"
         )
         self.validator_agent = ConversableAgent(
             name="ValidatorAgent",
             system_message=system_messages["ValidatorAgent"],
-            llm_config=self.llm_config,
+            llm_config=self.val_config,
+            human_input_mode="NEVER"
         )
         self.consensus_agent = ConversableAgent(
             name="ConsensusAgent",
             system_message=system_messages["ConsensusAgent"],
-            llm_config=self.llm_config,
+            llm_config=self.consensus_config,
+            human_input_mode="NEVER"
         )
 
     def reset(self):
         """Reset the GVCSolver's tracking state for a new game."""
         self.guesses.clear()
         logger.info("GVCSolver has been reset. Tracking sets cleared.")
+        self.initialize_agents()
 
     def guess(
         self, 
@@ -112,7 +103,7 @@ class GVCSolver(Solver):
         :raises ValueError: If consensus is not reached after maximum retries.
         """
         metrics = metrics or Metrics()
-        max_retries = 20
+        max_retries = 100
 
         for attempt in range(1, max_retries + 1):
             feedback = self._generate_feedback(entire_game_board, remaining_words)
@@ -126,7 +117,13 @@ class GVCSolver(Solver):
                 logger.info(f"GuesserAgent guessed group: {guesser_group} with category: {guesser_category}")
             except ValueError as e:
                 logger.error(f"Error parsing GuesserAgent's reply: {e}")
-                raise
+                try:
+                    guesser_reply = self._get_agent_reply(self.guesser_agent, guesser_prompt, "GuesserAgent")
+                    guesser_group, guesser_category = self.parse_guesser_reply(guesser_reply)
+                    logger.info(f"GuesserAgent guessed group: {guesser_group} with category: {guesser_category}")
+                except ValueError as e:
+                    logger.error(f"Error parsing GuesserAgent's reply: {e}")
+                    raise
 
             # Step 2: ValidatorAgent validates the category using the entire game board
             validator_prompt = self._create_validator_prompt(remaining_words, guesser_category, feedback)
@@ -137,7 +134,12 @@ class GVCSolver(Solver):
                 logger.info(f"ValidatorAgent identified group: {validator_group}")
             except ValueError as e:
                 logger.error(f"Error parsing ValidatorAgent's reply: {e}")
-                raise
+                try:
+                    validator_reply = self._get_agent_reply(self.validator_agent, validator_prompt, "ValidatorAgent")
+                    validator_group = self.parse_validator_reply(validator_reply)
+                    logger.info(f"ValidatorAgent identified group: {validator_group}")
+                except ValueError as e:
+                    raise
 
             # Step 3: ConsensusAgent checks if both groups match
             consensus_prompt = (
@@ -159,19 +161,21 @@ class GVCSolver(Solver):
                 logger.info(f"Consensus not reached for category '{guesser_category}'. Attempt {attempt} of {max_retries}.")
                 self.guesses.setdefault(guesser_category, []).append(tuple(guesser_group))
                 if attempt == max_retries:
-                    logger.error("Consensus not reached after maximum retries. Unable to make a guess.")
-                    raise ValueError("Consensus not reached after maximum retries. Unable to make a guess.")
+                    logger.error("Consensus not reached after maximum retries. Submitting latest guesser group.")
+                    return tuple(guesser_group), guesser_category
 
     def _generate_feedback(self, entire_game_board: List[str], remaining_words: List[str]) -> str:
         """Generate feedback based on previous guesses."""
         feedback = ""
         if self.guesses:
             feedback += "Note:\n"
-            feedback += "- Be aware that the following category and word group pairs either do not match or the category isn't specific enough:\n"
+            feedback += "**Previously guessed category names**:\n"
             for category, word_groups in self.guesses.items():
                 word_groups_str = '; '.join(['(' + ', '.join(group) + ')' for group in word_groups])
-                feedback += f"  * {category}: {word_groups_str}\n"
-        # print(feedback)
+                feedback += f"{category}\n"
+        print(feedback)
+
+
         return feedback
 
     def _create_guesser_prompt(self, remaining_words: List[str], group_size: int, feedback: str) -> str:
@@ -179,7 +183,6 @@ class GVCSolver(Solver):
         remaining_str = ', '.join(remaining_words)
         return (
             f"{feedback}\n"
-            f"**Do not repeat category names**!"
             f"Words: {remaining_str}\n\n"
             f"**Format Your Response As Follows:**\n"
             f"```\n"
