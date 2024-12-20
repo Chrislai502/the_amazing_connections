@@ -4,6 +4,7 @@ from .cot import CoTSolver
 from .naive import NaiveSolver
 from .gvc import GVCSolver
 from .basic import BasicSolver
+from .snap_gvc import SGVCSolver
 
 __all__ = [
     "Solver",
@@ -11,5 +12,6 @@ __all__ = [
     "CoTSolver",
     "NaiveSolver",
     "GVCSolver",
-    "BasicSolver"
+    "BasicSolver",
+    "SGVCSolver",
 ]
