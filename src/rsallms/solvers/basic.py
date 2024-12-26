@@ -1,12 +1,12 @@
 from ..endpoints import Endpoint, generate_prompt
 from ..metrics import Metrics
 
-from .solver import Solver, extract_words
+from .solver import Solver, extract_words, extract_guessed_category
 
 
 class BasicSolver(Solver):
 
-    def __init__(self, endpoint_url: str = "groq", model: str = "llama-3.1-70b-versatile"):
+    def __init__(self, endpoint_url: str = "groq", model: str = "llama-3.3-70b-versatile"):
         super().__init__()
         self.endpoint = Endpoint(
             endpoint_url,
@@ -23,7 +23,7 @@ class BasicSolver(Solver):
         response = self.endpoint.respond(message=full_prompt, system_prompt=None, metrics=metrics, temperature=0.7)
 
         guess = extract_words(response, word_bank, group_size, metrics=metrics)
-        reasoning = "" # extract_reasoning(response, guess, metrics=metrics)
+        guessed_category = extract_guessed_category(response, guess, metrics=metrics)
 
-        return tuple(guess), reasoning
+        return tuple(guess), guessed_category
 
