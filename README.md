@@ -1,4 +1,4 @@
-# the_amazing_connections
+# Making Connections
 
 This repository contains tools and solvers for playing and evaluating games of **Connections** with AI models. The solvers implement various strategies, including CoT (Chain-of-Thought), GVC (Generalized Value Computation), and an advanced version called Snap GVC, which is optimized for large models like GPT-4o.
 
@@ -7,17 +7,23 @@ This repository contains tools and solvers for playing and evaluating games of *
 ## **Features**
 
 -   Multiple solvers: Naive, CoT, Basic, GVC, and Snap GVC.
--   Flexible support for AI models, including **GPT-4o**, **GPT-4o-mini**, and others.
+-   Flexible support for AI models, including **GPT-4o**, **Llama-3.3**, and others.
 -   Game evaluation and automated benchmarking.
 
 ---
 
 ## **Installation**
+First, create a conda virtual environment and activate it:
+
+```bash
+conda create -n connections python=3.12 -y
+conda activate avhubert
+```
 
 Clone the repository and install dependencies:
 
 ```bash
-git clone <repository_url>
+git clone https://github.com/Chrislai502/the_amazing_connections.git
 cd the_amazing_connections
 pip install -e .
 ```
@@ -32,12 +38,10 @@ The main demo script is `run.py`. Below are the steps to run it:
 
 We recommend using the **Snap GVC solver** with the **GPT-4o** model for the best performance.
 
-**Note:** Make sure you `cd` into the `src/rsallms/` directory before running the commands below.
-
 Run the following command:
 
 ```bash
-python run.py snap_gvc gpt-4o --start 0 --end 10
+python src/rsallms/run.py snap_gvc gpt-4o --start 0 --end 10
 ```
 
 This runs the Snap GVC solver with the GPT-4o model on games indexed from 0 to 10 in the dataset.
@@ -49,7 +53,7 @@ This runs the Snap GVC solver with the GPT-4o model on games indexed from 0 to 1
 To test with different solvers and models, use the following command format:
 
 ```bash
-python run.py <solver_type> <model> --start <start_index> --end <end_index>
+python src/rsallms/run.py <solver_type> <model> --start <start_index> --end <end_index>
 ```
 
 #### **Arguments:**
@@ -66,7 +70,7 @@ python run.py <solver_type> <model> --start <start_index> --end <end_index>
 #### **Example:**
 
 ```bash
-python run.py cot llama-3.3-70b-versatile --start 5 --end 20
+python src/rsallms/run.py cot llama-3.3-70b-versatile --start 5 --end 20
 ```
 
 This runs the CoT solver using the LLaMA-3.3-70b-versatile model on games indexed from 5 to 20.
@@ -80,12 +84,12 @@ To switch between models, simply provide the desired model name as an argument t
 -   Use **GPT-4o**:
 
     ```bash
-    python run.py snap_gvc gpt-4o --start 0 --end 5
+    python src/rsallms/run.py snap_gvc gpt-4o --start 0 --end 5
     ```
 
 -   Use **LLaMA-3.3-70b**:
     ```bash
-    python run.py gvc llama-3.3-70b-versatile --start 10 --end 20
+    python src/rsallms/run.py gvc llama-3.3-70b-versatile --start 10 --end 20
     ```
 
 For Snap GVC, **GPT-4o** is the top recommended model for optimal results.
