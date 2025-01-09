@@ -1,6 +1,6 @@
 # Making Connections
 
-This repository contains tools and solvers for playing and evaluating games of **Connections** with AI models. The solvers implement various strategies, including CoT (Chain-of-Thought), GVC (Generalized Value Computation), and an advanced version called Snap GVC, which is optimized for large models like GPT-4o.
+This repository contains tools and solvers for playing and evaluating games of **Connections** with AI models. The solvers implement various strategies, including CoT (Chain-of-Thought), GVC (Guess, Validate, Consensus), and an advanced version called Snap GVC, which is optimized for large models like GPT-4o.
 
 ---
 
