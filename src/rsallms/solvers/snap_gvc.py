@@ -35,7 +35,7 @@ class SGVCSolver(Solver):
                 "config_list": [{
                     "model": "gpt-4o-mini",
                     "api_key": os.environ.get("OPENAI_API_KEY"),
-                    "temperature": 1.00
+                    "temperature": 0.7
                 }]
             }
         else:
@@ -43,7 +43,7 @@ class SGVCSolver(Solver):
                 "config_list": [{
                     "model": "gpt-4o",
                     "api_key": os.environ.get("OPENAI_API_KEY"),
-                    "temperature": 1.00
+                    "temperature": 0.7
                 }]
             }
         
@@ -51,7 +51,7 @@ class SGVCSolver(Solver):
             "config_list": [{
                 "model": "gpt-4o-mini",
                 "api_key": os.environ.get("OPENAI_API_KEY"),
-                "temperature": 1.0
+                "temperature": 0.9
             }]
         }
         
