@@ -1,23 +1,36 @@
 # Making Connections
 
-This repository contains tools and solvers for playing and evaluating games of **Connections** with AI models. The solvers implement various strategies, including CoT (Chain-of-Thought), GVC (Guess, Validate, Consensus), and an advanced version called Snap GVC, which is optimized for large models like GPT-4o.
+This repository contains tools and solvers for playing and evaluating **Connections** games with AI models. Our solvers implement various strategies—ranging from basic approaches to more advanced multi-agent, dual-process frameworks designed to mitigate “analysis paralysis.”
+
+## **Background**
+
+When Large Language Models (LLMs) tackle iterative puzzles like *Connections*, they can sometimes get stuck in repetitive loops (overthinking or “analysis paralysis”). Inspired by **Rational Speech Act** (RSA) theory and **dual-process** cognition (System 1 vs. System 2), we’ve developed:
+- **GVC (Guess, Validate, Consensus)**: A multi-agent system that separates guessing from validation, ensuring more grounded proposals.  
+- **Snap GVC**: An enhanced version of GVC that quickly switches between slow, deliberative reasoning (System 2) and fast, intuitive guesses (System 1) when stagnation is detected—mitigating overthinking and improving puzzle-solving efficiency.
+
+> **Note:** In the paper, these approaches are referred to as Think, Validate, Consensus (TVC) and Snap-Think. The code here uses the analogous terms GVC and Snap GVC.
 
 ---
 
 ## **Features**
 
--   Multiple solvers: Naive, CoT, Basic, GVC, and Snap GVC.
--   Flexible support for AI models, including **GPT-4o**, **Llama-3.3**, and others.
--   Game evaluation and automated benchmarking.
+- **Multiple solvers**:
+  - **Naive / Basic**: Simple heuristics without chain-of-thought.
+  - **CoT**: Chain-of-Thought prompting.
+  - **GVC (Guess, Validate, Consensus)**: Multi-agent approach to reduce incorrect or ungrounded guesses.
+  - **Snap GVC**: Dual-process version that switches to quick, high-temperature guesses upon detecting repeated failures.
+- **Flexible model support**: Works with **GPT-4o**, **Llama-3.3**, etc.
+- **Evaluation & Benchmarks**: Automated scripts to measure solver performance across multiple games.
 
 ---
 
 ## **Installation**
-First, create a conda virtual environment and activate it:
+
+Create a conda environment and activate it:
 
 ```bash
 conda create -n connections python=3.12 -y
-conda activate avhubert
+conda activate connections
 ```
 
 Clone the repository and install dependencies:
@@ -32,76 +45,73 @@ pip install -e .
 
 ## **Running a Demo**
 
-The main demo script is `run.py`. Below are the steps to run it:
+The main script is `run.py`. Below are some example commands.
 
-### **Quick Demo with Snap GVC and GPT-4o**
-
-We recommend using the **Snap GVC solver** with the **GPT-4o** model for the best performance.
-
-Run the following command:
+### **Recommended Demo: Snap GVC + GPT-4o**
 
 ```bash
 python src/rsallms/run.py snap_gvc gpt-4o --start 0 --end 10
 ```
 
-This runs the Snap GVC solver with the GPT-4o model on games indexed from 0 to 10 in the dataset.
-
----
+- **Snap GVC**: Uses a dual-process approach (similar to System 1 vs. System 2) to avoid analysis paralysis.  
+- **GPT-4o**: Recommended for robust language reasoning.
 
 ### **General Usage**
-
-To test with different solvers and models, use the following command format:
 
 ```bash
 python src/rsallms/run.py <solver_type> <model> --start <start_index> --end <end_index>
 ```
 
-#### **Arguments:**
+- `<solver_type>`: `naive`, `cot`, `basic`, `gvc`, or `snap_gvc`
+- `<model>`: e.g. `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `gpt-4o`, `gpt-4o-mini`
+- `--start`, `--end`: Specify the range of puzzle indices.
 
--   `<solver_type>`: Choose from `naive`, `cot`, `basic`, `gvc`, or `snap_gvc`.
--   `<model>`: Supported models include:
-    -   `llama-3.3-70b-versatile`
-    -   `llama-3.1-8b-instant`
-    -   `gpt-4o`
-    -   `gpt-4o-mini`
--   `--start`: The starting index of the games to evaluate (default: 0).
--   `--end`: The ending index of the games to evaluate.
-
-#### **Example:**
+**Example**:
 
 ```bash
 python src/rsallms/run.py cot llama-3.3-70b-versatile --start 5 --end 20
 ```
-
-This runs the CoT solver using the LLaMA-3.3-70b-versatile model on games indexed from 5 to 20.
+Runs the CoT solver with LLaMA-3.3-70b on puzzles [5..20].
 
 ---
 
 ## **Switching Models**
 
-To switch between models, simply provide the desired model name as an argument to `run.py`. For example:
+Just change the `<model>` argument:
 
--   Use **GPT-4o**:
+- **GPT-4o**:
 
-    ```bash
-    python src/rsallms/run.py snap_gvc gpt-4o --start 0 --end 5
-    ```
+  ```bash
+  python src/rsallms/run.py snap_gvc gpt-4o --start 0 --end 5
+  ```
 
--   Use **LLaMA-3.3-70b**:
-    ```bash
-    python src/rsallms/run.py gvc llama-3.3-70b-versatile --start 10 --end 20
-    ```
+- **LLaMA-3.3-70b**:
 
-For Snap GVC, **GPT-4o** is the top recommended model for optimal results.
+  ```bash
+  python src/rsallms/run.py gvc llama-3.3-70b-versatile --start 10 --end 20
+  ```
+
+**GPT-4o** is recommended for the best results with Snap GVC.
 
 ---
 
 ## **Adding Games**
 
-The script uses a `load_games()` function to load the dataset of games. To add or modify the games:
+The script loads puzzles via `load_games()`. To add or edit puzzles:
 
-1. Update the data in the appropriate `Connections` game files.
-2. Ensure the game format matches the expectations of the `Solver` classes.
+1. Update the relevant Connections data files.  
+2. Ensure each game follows the expected format for the solver classes.
+
+---
+
+## **Paper & Reference**
+
+For a deeper look at the multi-agent, dual-process approach used here, see our paper:
+
+> **Title**: *Snap Out of It: A Dual-Process, Multi-Agent Framework to Mitigate Analysis Paralysis in LLMs*  
+> **Authors**: [Ashish Pandian](mailto:ashishpandian@berkeley.edu), [Chris Lai](mailto:chris.lai@berkeley.edu), [Nelson Lojo](mailto:nelson.lojo@berkeley.edu), [Jackson Lukas](mailto:jacksonlukas@berkeley.edu)
+
+In the code, we use the terms **GVC** and **Snap GVC** to describe the same ideas (TVC & Snap-Think) from the paper.
 
 ---
 
