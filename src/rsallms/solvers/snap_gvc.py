@@ -5,8 +5,9 @@ from typing import Optional, Any, List, Tuple, Dict, Set
 from .solver import Solver
 from ..game import Connections, GameOverException
 from ..metrics import Metrics
-
+import autogen
 from autogen import ConversableAgent
+from ..autogen_custom_agent import CustomModelClient
 import pystache
 import re
 
@@ -30,6 +31,12 @@ class SGVCSolver(Solver):
     def __init__(self, api_type: str = "oai", model="gpt-4o"):
         super().__init__()
         
+        config_list_custom = autogen.config_list_from_json(
+                env_or_file="autogen_agents.json",
+                filter_dict={"model_client_cls": ["CustomModelClient"]},
+        )
+        # print("DEBUG",config_list_custom)
+        # exit(0)
         if model== "gpt-4o-mini":
             self.conservative_llm_config = {
                 "config_list": [{
@@ -38,6 +45,28 @@ class SGVCSolver(Solver):
                     "temperature": 1.00
                 }]
             }
+            self.snap_llm_config = {
+                "config_list": [{
+                    "model": "gpt-4o-mini",
+                    "api_key": os.environ.get("OPENAI_API_KEY"),
+                    "temperature": 1.0
+                }]
+            }
+        elif model== "gemeni-2o-flash":
+            # self.conservative_llm_config = {
+            #     "config_list": [{
+            #         "model": "gemeni-2o-flash",
+            #         "api_key": os.environ.get("GEMENI_API_KEY"),
+            #     }]
+            # }
+            # self.snap_llm_config = {
+            #     "config_list": [{
+            #         "model": "gemeni-2o-flash",
+            #         "api_key": os.environ.get("GEMENI_API_KEY"),
+            #     }]
+            # }
+            self.conservative_llm_config = {"config_list": config_list_custom}
+            self.snap_llm_config = {"config_list": config_list_custom}
         else:
             self.conservative_llm_config = {
                 "config_list": [{
@@ -46,14 +75,15 @@ class SGVCSolver(Solver):
                     "temperature": 1.00
                 }]
             }
-        
-        self.snap_llm_config = {
-            "config_list": [{
-                "model": "gpt-4o-mini",
-                "api_key": os.environ.get("OPENAI_API_KEY"),
-                "temperature": 1.0
-            }]
-        }
+            
+            self.snap_llm_config = {
+                "config_list": [{
+                    "model": "gpt-4o-mini",
+                    "api_key": os.environ.get("OPENAI_API_KEY"),
+                    "temperature": 1.0
+                }]
+            }
+
         
         # Initialize tracking dictionaries
         self.guesses: Dict[str, List[Tuple[str, ...]]] = {}  # category -> list of failed word groups
@@ -116,12 +146,15 @@ class SGVCSolver(Solver):
             llm_config=self.conservative_llm_config,
             human_input_mode= "NEVER"
         )
+        self.guesser_agent.register_model_client(model_client_cls=CustomModelClient, endpoint_type="gemeni-2o-flash")
+
         self.validator_agent = ConversableAgent(
             name="ValidatorAgent",
             system_message=system_messages["ValidatorAgent"],
             llm_config=self.conservative_llm_config,
             human_input_mode= "NEVER"
         )
+        self.validator_agent.register_model_client(model_client_cls=CustomModelClient, endpoint_type="gemeni-2o-flash")
         # self.consensus_agent = ConversableAgent(
         #     name="ConsensusAgent",
         #     system_message=system_messages["ConsensusAgent"],
@@ -140,6 +173,7 @@ class SGVCSolver(Solver):
             llm_config=self.snap_llm_config,
             human_input_mode= "NEVER"
         )
+        self.snap_agent.register_model_client(model_client_cls=CustomModelClient, endpoint_type="gemeni-2o-flash")
 
     def reset(self):
         """

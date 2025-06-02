@@ -18,17 +18,8 @@
         "api_version": "2024-02-01"
     },
     {
-        "model": "facebook/blenderbot_small-90M",
-        "model_client_cls": "CustomModelClient",
-        "device": "cuda",
-        "n": 1,
-        "params": {
-            "max_length": 1000
-        }
-    },
-    {
         "model": "gemeni-2o-flash",
         "model_client_cls": "CustomModelClient",
-        "api_key": "AIzaSyCuQ3DZPq6I_8BATLjP5v7K5lE9oGvQYco"
+        "api_key": "<your Gemeni API key here>"
     }
 ]

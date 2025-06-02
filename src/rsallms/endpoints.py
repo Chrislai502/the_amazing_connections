@@ -42,6 +42,10 @@ class Endpoint:
         "groq": {
             "base_url": "https://api.groq.com/openai/",
             "api_key": "GROQ_API_KEY"
+        },
+        "gemeni-2o-flash": {
+            "base_url": "https://generativelanguage.googleapis.com/",
+            "api_key": "GEMENI_API_KEY"
         }
     }
 

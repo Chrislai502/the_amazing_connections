@@ -14,11 +14,15 @@ ENDPOINTS: EndpointConfig = {
         # model="llama-3.2-3b-preview",
         # model="llama-3.2-90b-vision-preview",
         model="llama-3.1-70b-versatile"
+    ),
+    "gemeni": Endpoint(
+        base_url="gemeni-2o-flash",
+        model="gemeni-2o-flash"
     )
 }
 class CustomModelClient:
     def __init__(self, config, **kwargs):
-        pass
+        
         # Print the configuration details for debugging purposes
         # print(f"CustomModelClient config: {config}")
 
@@ -50,7 +54,11 @@ class CustomModelClient:
 
         # # Print a message confirming the model and device setup
         # print(f"Loaded model {config['model']} to {self.device}")
-
+        print("Debug: CustomModelClient initialized.")
+        print("Debug:", config)
+        self.endpoint_type = kwargs.get("endpoint_type", "default")
+        print("Debug:", self.endpoint_type)
+        
     def create(self, params):
         # Check if streaming is requested; raise an error if so, as it's not supported locally
         # Streaming responses (sending partial responses in real-time) is not implemented here
@@ -65,7 +73,7 @@ class CustomModelClient:
             response = SimpleNamespace()
 
             # Testing
-            json_response = ENDPOINTS["default"].test_respond(message=params["messages"][1]['content'], system_prompt=params["messages"][0]['content'])
+            json_response = ENDPOINTS[self.endpoint_type].test_respond(message=params["messages"][1]['content'], system_prompt=params["messages"][0]['content'])
 
             # Crafting the response object
             response.choices = []

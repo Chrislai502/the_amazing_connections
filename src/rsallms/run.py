@@ -37,7 +37,8 @@ def parse_args() -> argparse.Namespace:
         "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant",
         "gpt-4o",
-        "gpt-4o-mini"
+        "gpt-4o-mini",
+        "gemeni-2o-flash"
     ])
     return parser.parse_args()
 
