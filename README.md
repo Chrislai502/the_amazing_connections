@@ -1,123 +1,131 @@
-# Making Connections
+# Making Connections: Multi-Agent LLM Reasoning on NYT Connections
 
-This repository contains tools and solvers for playing and evaluating **Connections** games with AI models. Our solvers implement various strategies—ranging from basic approaches to more advanced multi-agent, dual-process frameworks designed to mitigate “analysis paralysis.”
+A multi-agent framework that solves NYT Connections puzzles at **98% accuracy on GPT-4o** and **80% on GPT-4o-mini** by detecting and escaping *analysis paralysis* — the failure mode where reasoning models loop on the same wrong answer.
 
-## **Background**
+Published at the [1st Workshop for Research on Agent Language Models (REALM 2025)](https://aclanthology.org/2025.realm-1.16/), co-located with ACL 2025.
 
-When Large Language Models (LLMs) tackle iterative puzzles like *Connections*, they can sometimes get stuck in repetitive loops (overthinking or “analysis paralysis”). Inspired by **Rational Speech Act** (RSA) theory and **dual-process** cognition (System 1 vs. System 2), we’ve developed:
-- **GVC (Guess, Validate, Consensus)**: A multi-agent system that separates guessing from validation, ensuring more grounded proposals.  
-- **Snap GVC**: An enhanced version of GVC that quickly switches between slow, deliberative reasoning (System 2) and fast, intuitive guesses (System 1) when stagnation is detected—mitigating overthinking and improving puzzle-solving efficiency.
+## Headline results
 
-> **Note:** In the paper, these approaches are referred to as Think, Validate, Consensus (TVC) and Snap-Think. The code here uses the analogous terms GVC and Snap GVC.
+| Model       | Strategy             | Solve rate | Semantic grounding (↓) | Guesses / puzzle (↓) |
+|-------------|----------------------|-----------:|-----------------------:|---------------------:|
+| GPT-4o      | Basic prompt         | 58%        | 4.59                   | 10.13                |
+| GPT-4o      | Chain-of-Thought     | 72%        | 4.81                   | 8.00                 |
+| GPT-4o      | GVC (ours)           | 56%        | 1.50                   | 1.45                 |
+| **GPT-4o**  | **Snap-GVC (ours)**  | **98%**    | **0.50**               | **1.38**             |
+| GPT-4o-mini | Chain-of-Thought     | 38%        | 3.71                   | 13.70                |
+| **GPT-4o-mini** | **Snap-GVC (ours)** | **80%**  | **0.86**               | **2.06**             |
 
----
+Snap-GVC wins on all three axes: accuracy, semantic grounding (fewer hallucinated out-of-board words), and efficiency (fewer guesses submitted). Notably, Snap-GVC on GPT-4o-mini outperforms every prompting strategy we tested on the 70B-parameter LLaMa-3.3.
 
-## **Features**
+Full results table, including all LLaMa variants and baselines, appears in Table 1 of the [paper](https://aclanthology.org/2025.realm-1.16/).
 
-- **Multiple solvers**:
-  - **Naive / Basic**: Simple heuristics without chain-of-thought.
-  - **CoT**: Chain-of-Thought prompting.
-  - **GVC (Guess, Validate, Consensus)**: Multi-agent approach to reduce incorrect or ungrounded guesses.
-  - **Snap GVC**: Dual-process version that switches to quick, high-temperature guesses upon detecting repeated failures.
-- **Flexible model support**: Works with **GPT-4o**, **Llama-3.3**, etc.
-- **Evaluation & Benchmarks**: Automated scripts to measure solver performance across multiple games.
+## Idea in one paragraph
 
----
+LLMs often get stuck in *analysis paralysis* — they deliberate endlessly on the same wrong answer rather than committing or exploring alternatives. **GVC** (Guess, Validate, Consensus) imitates the Rational Speech Act model of pragmatic communication: a Guesser proposes a grouping and a category label, a Validator independently re-derives the grouping from just the label, and a Consensus agent commits only when the two agree. **Snap-GVC** adds a dual-process escape hatch: when the slow, System-2 GVC loop stalls on *k* failures, the system switches to a fast, high-temperature, System-1 Snap-Guesser that breaks the loop through controlled exploration.
 
-## **Installation**
+## Architecture
 
-Create a conda environment and activate it:
+![Snap-GVC architecture](assets/architecture.png)
+
+*Left: the Slow (System 2) cycle — Guesser and Validator exchange reasoning and feedback. Right: the Snap (System 1) cycle — activated on stagnation, a smaller, higher-temperature model produces intuitive guesses. The Feedback Generation module mediates phase transitions.*
+
+## Installation
 
 ```bash
 conda create -n connections python=3.12 -y
 conda activate connections
-```
 
-Clone the repository and install dependencies:
-
-```bash
 git clone https://github.com/Chrislai502/the_amazing_connections.git
 cd the_amazing_connections
 pip install -e .
 ```
 
----
+Set API keys (OpenAI for GPT-4o runs, Groq for LLaMa runs):
 
-## **Running a Demo**
+```bash
+export OPENAI_API_KEY=...
+export GROQ_API_KEY=...
+```
 
-The main script is `run.py`. Below are some example commands.
+## Quickstart
 
-### **Recommended Demo: Snap GVC + GPT-4o**
+Reproduce the headline GPT-4o Snap-GVC result on the first 10 puzzles:
 
 ```bash
 python src/rsallms/run.py snap_gvc gpt-4o --start 0 --end 10
 ```
 
-- **Snap GVC**: Uses a dual-process approach (similar to System 1 vs. System 2) to avoid analysis paralysis.  
-- **GPT-4o**: Recommended for robust language reasoning.
-
-### **General Usage**
+Or via the installed console script:
 
 ```bash
-python src/rsallms/run.py <solver_type> <model> --start <start_index> --end <end_index>
+run-solver snap_gvc gpt-4o --start 0 --end 10
 ```
 
-- `<solver_type>`: `naive`, `cot`, `basic`, `gvc`, or `snap_gvc`
-- `<model>`: e.g. `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `gpt-4o`, `gpt-4o-mini`
-- `--start`, `--end`: Specify the range of puzzle indices.
+General form:
 
-**Example**:
+```bash
+python src/rsallms/run.py <solver> <model> --start <i> --end <j>
+```
+
+- `<solver>`: `basic`, `cot`, `gvc`, `snap_gvc`
+- `<model>`: `gpt-4o`, `gpt-4o-mini`, `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`
+
+Example — Chain-of-Thought with LLaMa-3.3-70b on puzzles 5–20:
 
 ```bash
 python src/rsallms/run.py cot llama-3.3-70b-versatile --start 5 --end 20
 ```
-Runs the CoT solver with LLaMA-3.3-70b on puzzles [5..20].
 
----
+## Repository structure
 
-## **Switching Models**
+```
+src/rsallms/
+  agents/            # Guesser, Validator, Consensus, Snap agents
+  prompts/           # Mustache templates (see paper Appendix A.4)
+  solvers/           # basic, cot, gvc, snap_gvc solver implementations
+  eval/              # metrics, aggregation, plotting
+  run.py             # CLI entrypoint
+display_db_data.py   # Render metrics from evals.db
+```
 
-Just change the `<model>` argument:
+## Citation
 
-- **GPT-4o**:
+If you use this work, please cite:
 
-  ```bash
-  python src/rsallms/run.py snap_gvc gpt-4o --start 0 --end 5
-  ```
+```bibtex
+@inproceedings{pandian-etal-2025-snap,
+    title = "Snap Out of It: A Dual-Process Approach to Mitigating Overthinking in Language Model Reasoning",
+    author = "Pandian, Ashish  and
+      Lojo, Nelson  and
+      Lai, Wei Xun  and
+      Lukas, Jackson",
+    editor = "Kamalloo, Ehsan  and
+      Gontier, Nicolas  and
+      Lu, Xing Han  and
+      Dziri, Nouha  and
+      Murty, Shikhar  and
+      Lacoste, Alexandre",
+    booktitle = "Proceedings of the 1st Workshop for Research on Agent Language Models (REALM 2025)",
+    month = jul,
+    year = "2025",
+    address = "Vienna, Austria",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2025.realm-1.16/",
+    doi = "10.18653/v1/2025.realm-1.16",
+    pages = "228--249",
+    ISBN = "979-8-89176-264-0"
+}
+```
 
-- **LLaMA-3.3-70b**:
+> **Naming note.** In the paper these methods are called **TVC** (Think, Validate, Consensus) and **Snap-Think**. The code here uses the equivalent names **GVC** and **Snap-GVC** for historical reasons.
 
-  ```bash
-  python src/rsallms/run.py gvc llama-3.3-70b-versatile --start 10 --end 20
-  ```
+## Contributors
 
-**GPT-4o** is recommended for the best results with Snap GVC.
+- [Ashish Pandian](https://github.com/ashishp166)
+- [Chris (Wei Xun) Lai](https://github.com/Chrislai502)
+- [Nelson Lojo](https://github.com/nelson-lojo)
+- [Jackson Lukas](https://github.com/jacksonmlukas)
 
----
+## License
 
-## **Adding Games**
-
-The script loads puzzles via `load_games()`. To add or edit puzzles:
-
-1. Update the relevant Connections data files.  
-2. Ensure each game follows the expected format for the solver classes.
-
----
-
-## **Paper & Reference**
-
-For a deeper look at the multi-agent, dual-process approach used here, see our paper:
-
-> **Title**: *Snap Out of It: A Dual-Process, Multi-Agent Framework to Mitigate Analysis Paralysis in LLMs*  
-> **Authors**: [Ashish Pandian](mailto:ashishpandian@berkeley.edu), [Chris Lai](mailto:chris.lai@berkeley.edu), [Nelson Lojo](mailto:nelson.lojo@berkeley.edu), [Jackson Lukas](mailto:jacksonlukas@berkeley.edu)
-
-In the code, we use the terms **GVC** and **Snap GVC** to describe the same ideas (TVC & Snap-Think) from the paper.
-
----
-
-## **Maintainer**
-
-This repository is maintained by:
-
-**Chris Lai**  
-Email: [chrislai_502@berkeley.edu](mailto:chrislai_502@berkeley.edu)
+MIT — see [LICENSE](LICENSE).

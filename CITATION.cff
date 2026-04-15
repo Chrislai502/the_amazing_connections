@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite our paper."
+title: "Snap Out of It: A Dual-Process Approach to Mitigating Overthinking in Language Model Reasoning"
+authors:
+  - family-names: Pandian
+    given-names: Ashish
+  - family-names: Lojo
+    given-names: Nelson
+  - family-names: Lai
+    given-names: Wei Xun
+  - family-names: Lukas
+    given-names: Jackson
+year: 2025
+url: "https://aclanthology.org/2025.realm-1.16/"
+doi: "10.18653/v1/2025.realm-1.16"
+preferred-citation:
+  type: conference-paper
+  title: "Snap Out of It: A Dual-Process Approach to Mitigating Overthinking in Language Model Reasoning"
+  authors:
+    - family-names: Pandian
+      given-names: Ashish
+    - family-names: Lojo
+      given-names: Nelson
+    - family-names: Lai
+      given-names: Wei Xun
+    - family-names: Lukas
+      given-names: Jackson
+  collection-title: "Proceedings of the 1st Workshop for Research on Agent Language Models (REALM 2025)"
+  publisher:
+    name: "Association for Computational Linguistics"
+  month: 7
+  year: 2025
+  start: 228
+  end: 249
+  isbn: "979-8-89176-264-0"
+  doi: "10.18653/v1/2025.realm-1.16"
+  url: "https://aclanthology.org/2025.realm-1.16/"
