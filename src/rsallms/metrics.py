@@ -64,6 +64,7 @@ class Metrics:
             'solve_rate': self.solve_rate,
             'tokens_used': self.tokens_used,
             'num_hallucinated_words': self.hallucinated_words,
+            'cosine_similarity': self.category_similarity
         }
     
     def hallucination_words(self, guess_word_lst: list[str], all_board_words: list[str]) -> float:
@@ -82,6 +83,9 @@ class Metrics:
         embedding1, embedding2 = embeddings[0], embeddings[1]
         similarity = np.dot(embedding1, embedding2)
         normalized_similarity = (similarity + 1) / 2
+        print(f"Normalized similarity: {normalized_similarity}")
+        print(f"category guess: {guessed_cat}")
+        print(f"correct category: {correct_cat}")
         self.category_similarity = (((len(self.solve_order) - 1) * self.category_similarity) + normalized_similarity) / len(self.solve_order)
         return normalized_similarity
 
@@ -99,7 +103,8 @@ class Metrics:
                     solve_rate REAL,
                     solve_order TEXT,
                     num_tokens_generated INTEGER,
-                    num_tokens_ingested INTEGER
+                    num_tokens_ingested INTEGER,
+                    cosine_similarity REAL
                 )
             """)
 
@@ -110,8 +115,8 @@ class Metrics:
             conn.execute("""
                 INSERT INTO evaluations (
                     timestamp, hallucination_rate, num_failed_guesses, solve_rate, 
-                    solve_order, num_tokens_generated, num_tokens_ingested
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    solve_order, num_tokens_generated, num_tokens_ingested, cosine_similarity
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 timestamp,
                 self.hallucinated_words,
@@ -119,7 +124,8 @@ class Metrics:
                 self.solve_rate,
                 str(self.solve_order),
                 sum(t['completion_tokens'] for t in self.tokens_used.values()),
-                sum(t['prompt_tokens'] for t in self.tokens_used.values())
+                sum(t['prompt_tokens'] for t in self.tokens_used.values()),
+                self.category_similarity
             ))
 
         conn.close()
